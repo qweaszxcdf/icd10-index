@@ -1,0 +1,18 @@
+{
+  "name": "icd10-index-worker",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "test": "node --test ../tests/build.test.mjs ../tests/worker.test.mjs",
+    "check": "npm run build && node --check scripts/build.mjs && node --check src/index.js && node --check public/static/app.js && npm test",
+    "db:init:local": "wrangler d1 execute feedback --local --file=../schema.sql",
+    "db:init:remote": "wrangler d1 execute feedback --remote --file=../schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

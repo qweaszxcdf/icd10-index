@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "icd10-index",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-24",
+  "cache": {
+    "enabled": true,
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ],
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "feedback",
+      "database_id": "f755b043-bb86-4ea8-ae8c-e56991814433"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
