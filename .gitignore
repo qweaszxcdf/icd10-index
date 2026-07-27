@@ -1,5 +1,4 @@
 .DS_Store
 workers/node_modules/
 workers/.wrangler/
-workers/public/data/dataset.json
-workers/public/data/build-report.json
+workers/public/

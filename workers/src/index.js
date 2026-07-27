@@ -33,6 +33,7 @@ const ROW_SUBTREE_END = 15;
 
 const ICD_CODE_RE = /\b([A-Z][0-9]{2}(?:\.[0-9A-Z]{1,8})?)[†*]?\b/gi;
 let datasetPromise = null;
+const rowJsonCaches = new WeakMap();
 
 function normalizeText(value) {
   if (value === null || value === undefined) return "";
@@ -64,6 +65,14 @@ function extractCodes(value) {
 }
 
 function rowToJson(dataset, index, matched = false) {
+  let cache = rowJsonCaches.get(dataset);
+  if (!cache) {
+    cache = new Map();
+    rowJsonCaches.set(dataset, cache);
+  }
+  const cached = cache.get(index);
+  if (cached) return { ...cached, matched };
+
   const row = dataset.rows[index];
   const confidence = typeof row[ROW_CONFIDENCE] === "number" ? row[ROW_CONFIDENCE] : null;
   const hierarchyPath = [];
@@ -80,7 +89,7 @@ function rowToJson(dataset, index, matched = false) {
     });
     parentIndex = parent[ROW_PARENT];
   }
-  return {
+  const result = {
     id: `r${index}`,
     index,
     image_page: row[ROW_IMAGE_PAGE],
@@ -98,12 +107,14 @@ function rowToJson(dataset, index, matched = false) {
       benign: extractCodes(row[ROW_BENIGN]),
       uncertain_or_unspecified: extractCodes(row[ROW_UNCERTAIN]),
     },
-    matched,
+    matched: false,
     parent_index: row[ROW_PARENT],
     hierarchy_path: hierarchyPath,
     subtree_end: row[ROW_SUBTREE_END],
     has_children: row[ROW_SUBTREE_END] > index + 1,
   };
+  cache.set(index, result);
+  return { ...result, matched };
 }
 
 function buildHierarchy(nodes) {
@@ -144,15 +155,25 @@ function rowCodeTokens(row) {
   return normalizeText(row[ROW_NORMALIZED_CODES]).split(/\s+/).filter(Boolean);
 }
 
+function codeCandidateIndices(dataset, query, exactPreferred = true) {
+  const codeQuery = normalizeCode(query);
+  const exact = dataset.code_index?.[codeQuery];
+  if (exactPreferred && exact?.length) return [...exact];
+  const candidates = new Set();
+  for (const [code, indices] of Object.entries(dataset.code_index || {})) {
+    if (!code.startsWith(codeQuery)) continue;
+    for (const index of indices) candidates.add(index);
+  }
+  return [...candidates].sort((left, right) => left - right);
+}
+
 function rowMatchesSearch(row, query, mode) {
   const queryLower = normalizeText(query).toLowerCase();
   if (!queryLower) return false;
   const codeMode = mode === "code";
-  const autoCodeMode = mode === "auto" && looksLikeIcdQuery(queryLower);
-  if (codeMode || autoCodeMode) {
+  if (codeMode) {
     const codeQuery = normalizeCode(queryLower);
-    if (rowCodeTokens(row).some((code) => code.startsWith(codeQuery))) return true;
-    if (codeMode) return false;
+    return rowCodeTokens(row).some((code) => code.startsWith(codeQuery));
   }
   const text = normalizeText(row[ROW_SEARCH_BLOB]).toLowerCase();
   if (mode === "phrase") return text.includes(queryLower);
@@ -176,16 +197,19 @@ function searchRows(dataset, query, mode = "auto", limit = RESULT_LIMIT) {
     };
   }
 
-  let resultIndices = [];
-  const codeMode = mode === "code" || (mode === "auto" && looksLikeIcdQuery(queryText));
+  let candidateIndices = null;
   if (mode === "code") {
     const exact = dataset.code_index?.[normalizeCode(queryText)] || [];
-    if (exact.length) resultIndices = [...exact];
+    if (exact.length) candidateIndices = exact;
+  } else if (mode === "auto" && looksLikeIcdQuery(queryText)) {
+    candidateIndices = codeCandidateIndices(dataset, queryText, false);
   }
-  if (!resultIndices.length) {
-    for (let index = 0; index < rows.length; index += 1) {
-      if (rowMatchesSearch(rows[index], queryText, mode)) resultIndices.push(index);
-    }
+  if (!candidateIndices) {
+    candidateIndices = rows.map((_, index) => index);
+  }
+  const resultIndices = [];
+  for (const index of candidateIndices) {
+    if (rowMatchesSearch(rows[index], queryText, mode)) resultIndices.push(index);
   }
 
   const count = resultIndices.length;

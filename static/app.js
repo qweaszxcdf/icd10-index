@@ -30,10 +30,256 @@ let currentQuery = "";
 let currentMode = "auto";
 let currentSearchController = null;
 let feedbackRecord = null;
+let clientDatasetPromise = null;
+const clientSearchCache = new Map();
+const clientLocateCache = new Map();
 
-function buildSearchUrl(query, mode = "auto") {
-  const params = new URLSearchParams({ q: query, mode });
-  return `/api/search?${params.toString()}`;
+const ROW_IMAGE_PAGE = 0;
+const ROW_LEVEL = 1;
+const ROW_CHINESE = 2;
+const ROW_ENGLISH = 3;
+const ROW_CODE = 4;
+const ROW_CONFIDENCE = 5;
+const ROW_MALIGNANT_PRIMARY = 6;
+const ROW_MALIGNANT_SECONDARY = 7;
+const ROW_IN_SITU = 8;
+const ROW_BENIGN = 9;
+const ROW_UNCERTAIN = 10;
+const ROW_SOURCE_FILE = 11;
+const ROW_SEARCH_BLOB = 12;
+const ROW_NORMALIZED_CODES = 13;
+const ROW_PARENT = 14;
+const ROW_SUBTREE_END = 15;
+const ICD_CODE_RE = /\b([A-Z][0-9]{2}(?:\.[0-9A-Z]{1,8})?)[†*]?\b/gi;
+const RESULT_LIMIT = 300;
+let clientRowCache = null;
+
+function normalizeText(value) {
+  if (value === null || value === undefined) return "";
+  const text = String(value).trim();
+  return ["nan", "none", "null"].includes(text.toLowerCase()) ? "" : text;
+}
+
+function normalizeCode(value) {
+  return normalizeText(value).replace(/\s+/g, "").toLowerCase();
+}
+
+function extractCodes(value) {
+  const seen = new Set();
+  const codes = [];
+  for (const match of normalizeText(value).toUpperCase().matchAll(ICD_CODE_RE)) {
+    if (!seen.has(match[1])) {
+      seen.add(match[1]);
+      codes.push(match[1]);
+    }
+  }
+  return codes;
+}
+
+function looksLikeIcdQuery(query) {
+  return /^[a-z][0-9]{1,2}(?:[.\-x0-9a-z]*)?$/i.test(query.trim());
+}
+
+async function loadClientDataset() {
+  if (!clientDatasetPromise) {
+    clientDatasetPromise = fetch("/data/dataset.json", { cache: "force-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((dataset) => {
+        clientRowCache = new Map();
+        return dataset;
+      });
+    clientDatasetPromise.catch(() => { clientDatasetPromise = null; });
+  }
+  return clientDatasetPromise;
+}
+
+function clientRowToJson(dataset, index, matched = false) {
+  const cached = clientRowCache?.get(index);
+  if (cached) return { ...cached, matched };
+  const row = dataset.rows[index];
+  const hierarchyPath = [];
+  let parentIndex = row[ROW_PARENT];
+  while (parentIndex >= 0) {
+    const parent = dataset.rows[parentIndex];
+    hierarchyPath.unshift({
+      index: parentIndex,
+      level: parent[ROW_LEVEL],
+      image_page: parent[ROW_IMAGE_PAGE],
+      chinese: normalizeText(parent[ROW_CHINESE]),
+      english: normalizeText(parent[ROW_ENGLISH]),
+      codes: extractCodes(parent[ROW_CODE]),
+    });
+    parentIndex = parent[ROW_PARENT];
+  }
+  const result = {
+    id: `r${index}`,
+    index,
+    image_page: row[ROW_IMAGE_PAGE],
+    level: row[ROW_LEVEL],
+    chinese: normalizeText(row[ROW_CHINESE]),
+    english: normalizeText(row[ROW_ENGLISH]),
+    code: normalizeText(row[ROW_CODE]),
+    codes: extractCodes(row[ROW_CODE]),
+    confidence: typeof row[ROW_CONFIDENCE] === "number" ? row[ROW_CONFIDENCE] : null,
+    source_file: dataset.source_files?.[row[ROW_SOURCE_FILE]] || "",
+    neoplasm: {
+      malignant_primary: extractCodes(row[ROW_MALIGNANT_PRIMARY]),
+      malignant_secondary: extractCodes(row[ROW_MALIGNANT_SECONDARY]),
+      in_situ: extractCodes(row[ROW_IN_SITU]),
+      benign: extractCodes(row[ROW_BENIGN]),
+      uncertain_or_unspecified: extractCodes(row[ROW_UNCERTAIN]),
+    },
+    matched: false,
+    parent_index: row[ROW_PARENT],
+    hierarchy_path: hierarchyPath,
+    subtree_end: row[ROW_SUBTREE_END],
+    has_children: row[ROW_SUBTREE_END] > index + 1,
+  };
+  clientRowCache?.set(index, result);
+  return { ...result, matched };
+}
+
+function clientBuildHierarchy(nodes) {
+  const tree = [];
+  const stack = [];
+  for (const node of nodes) {
+    node.children = [];
+    while (stack.length && stack.at(-1).level >= node.level) stack.pop();
+    if (stack.length) stack.at(-1).children.push(node);
+    else tree.push(node);
+    stack.push(node);
+  }
+  return tree;
+}
+
+function clientCollectRelevantRows(dataset, indices) {
+  const matched = new Set(indices);
+  const included = new Set();
+  for (const resultIndex of matched) {
+    let index = resultIndex;
+    while (index >= 0) {
+      included.add(index);
+      const parentIndex = dataset.rows[index][ROW_PARENT];
+      if (parentIndex < 0 || dataset.rows[parentIndex][ROW_LEVEL] < 2) break;
+      index = parentIndex;
+    }
+  }
+  return [...included].sort((a, b) => a - b)
+    .map((index) => clientRowToJson(dataset, index, matched.has(index)));
+}
+
+function clientRowMatches(row, query, mode) {
+  const queryLower = normalizeText(query).toLowerCase();
+  if (mode === "code") {
+    const codeQuery = normalizeCode(queryLower);
+    return String(row[ROW_NORMALIZED_CODES] || "").split(/\s+/).some((code) => code.startsWith(codeQuery));
+  }
+  const text = normalizeText(row[ROW_SEARCH_BLOB]).toLowerCase();
+  if (mode === "phrase") return text.includes(queryLower);
+  return queryLower.split(/\s+/).filter(Boolean).every((token) => text.includes(token));
+}
+
+function clientCodeCandidates(dataset, query) {
+  const prefix = normalizeCode(query);
+  const indices = new Set();
+  for (const [code, values] of Object.entries(dataset.code_index || {})) {
+    if (code.startsWith(prefix)) values.forEach((index) => indices.add(index));
+  }
+  return [...indices].sort((a, b) => a - b);
+}
+
+function clientSearch(dataset, query, mode) {
+  if (!query) {
+    const roots = [];
+    dataset.rows.forEach((row, index) => { if (row[ROW_LEVEL] === 0) roots.push(index); });
+    return { count: roots.length, shown: roots.length, limited: false, tree: clientBuildHierarchy(roots.map((index) => clientRowToJson(dataset, index))) };
+  }
+  let candidates = null;
+  if (mode === "code") {
+    const exact = dataset.code_index?.[normalizeCode(query)];
+    candidates = exact?.length ? exact : null;
+  } else if (mode === "auto" && looksLikeIcdQuery(query)) {
+    candidates = clientCodeCandidates(dataset, query);
+  }
+  if (!candidates) candidates = dataset.rows.map((_, index) => index);
+  const matches = candidates.filter((index) => clientRowMatches(dataset.rows[index], query, mode));
+  const shown = matches.slice(0, RESULT_LIMIT);
+  return {
+    count: matches.length,
+    shown: shown.length,
+    limited: matches.length > shown.length,
+    tree: clientBuildHierarchy(clientCollectRelevantRows(dataset, shown)),
+  };
+}
+
+function clientLocateMatch(row, target) {
+  const lower = normalizeText(target).toLowerCase();
+  for (const value of [row[ROW_ENGLISH], row[ROW_CHINESE]]) {
+    const text = normalizeText(value).toLowerCase();
+    if (text === lower || (text.startsWith(lower) && " ,-/()—，：:".includes(text[lower.length] || ""))) return true;
+  }
+  return false;
+}
+
+function clientLocate(dataset, target) {
+  const normalized = normalizeText(target).toLowerCase();
+  if (looksLikeIcdQuery(normalized)) {
+    const exact = dataset.code_index?.[normalizeCode(normalized)] || [];
+    if (exact.length) return exact[0];
+  }
+  const parts = normalized.split(/[，,]/).map((part) => part.trim()).filter(Boolean);
+  const candidates = dataset.rows.map((row, index) => ({ index, row }))
+    .filter(({ row }) => clientLocateMatch(row, parts[0] || normalized));
+  if (parts.length === 1) return candidates.sort((a, b) => a.row[ROW_LEVEL] - b.row[ROW_LEVEL] || a.index - b.index)[0]?.index ?? -1;
+  for (const candidate of candidates) {
+    let current = candidate.index;
+    let partIndex = 1;
+    while (partIndex < parts.length) {
+      const end = dataset.rows[current][ROW_SUBTREE_END];
+      const next = dataset.rows.slice(current + 1, end).findIndex((row) => row[ROW_PARENT] === current && clientLocateMatch(row, parts[partIndex]));
+      if (next < 0) break;
+      current = current + 1 + next;
+      partIndex += 1;
+    }
+    if (partIndex === parts.length) return current;
+  }
+  return candidates[0]?.index ?? -1;
+}
+
+async function clientSearchResponse(query, mode) {
+  const cacheKey = `${mode}\u0000${query}`;
+  const cached = clientSearchCache.get(cacheKey);
+  if (cached) return cached;
+  const dataset = await loadClientDataset();
+  const result = clientSearch(dataset, query, mode);
+  const response = { ...result, query, mode };
+  if (clientSearchCache.size >= 50) clientSearchCache.delete(clientSearchCache.keys().next().value);
+  clientSearchCache.set(cacheKey, response);
+  return response;
+}
+
+async function clientLocateResponse(target) {
+  const cacheKey = normalizeText(target).toLowerCase();
+  const cached = clientLocateCache.get(cacheKey);
+  if (cached) return cached;
+  const dataset = await loadClientDataset();
+  const index = clientLocate(dataset, target);
+  const indices = index >= 0 ? [index] : [];
+  const treeRows = clientCollectRelevantRows(dataset, indices);
+  const response = {
+    query: target,
+    count: indices.length,
+    shown: indices.length,
+    limited: false,
+    rows: indices.map((item) => clientRowToJson(dataset, item, true)),
+    tree: clientBuildHierarchy(treeRows),
+  };
+  if (clientLocateCache.size >= 100) clientLocateCache.delete(clientLocateCache.keys().next().value);
+  clientLocateCache.set(cacheKey, response);
+  return response;
 }
 
 function codeUrl(code) {
@@ -77,9 +323,7 @@ function createReferenceAnchor(ref) {
     event.stopPropagation();
     summaryEl.textContent = `正在定位：${ref.target}`;
     try {
-      const response = await fetch(`/api/locate?target=${encodeURIComponent(ref.target)}`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
+      const data = await clientLocateResponse(ref.target);
       renderSummary(data);
       renderTree(data);
       queryInput.value = ref.target;
@@ -286,14 +530,27 @@ function renderNode(node, asPath = false) {
 
   async function loadChildren() {
     if (loaded) return;
+    const dataset = await loadClientDataset();
     const params = new URLSearchParams({
       id: node.id,
       q: currentQuery,
       mode: currentMode,
     });
-    const response = await fetch(`/api/children?${params.toString()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
+    let data;
+    if (dataset) {
+      const startIndex = Number(node.index);
+      const end = dataset.rows[startIndex]?.[ROW_SUBTREE_END] ?? startIndex + 1;
+      const children = [];
+      for (let index = startIndex + 1; index < end; index += 1) {
+        if (dataset.rows[index][ROW_PARENT] !== startIndex) continue;
+        children.push(clientRowToJson(dataset, index, clientRowMatches(dataset.rows[index], currentQuery, currentMode)));
+      }
+      data = { children };
+    } else {
+      const response = await fetch(`/api/children?${params.toString()}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      data = await response.json();
+    }
     fullContainer = document.createElement("div");
     fullContainer.className = "child-list";
     (data.children || []).forEach((child) => fullContainer.appendChild(renderNode(child, false)));
@@ -367,9 +624,7 @@ async function performSearch({ updateUrl = true } = {}) {
   treeContainer.innerHTML = '<p class="loading">正在检索索引……</p>';
 
   try {
-    const response = await fetch(buildSearchUrl(query, currentMode), { signal: currentSearchController.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
+    const data = await clientSearchResponse(query, currentMode);
     renderSummary(data);
     renderTree(data);
     if (updateUrl) {
