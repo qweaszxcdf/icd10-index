@@ -367,7 +367,11 @@ function appendNodeTitle(container, node) {
   } else {
     container.appendChild(document.createTextNode("(无标题)"));
   }
+  const neoplasmCodes = new Set(
+    NEOPLASM_FIELDS.flatMap(([key]) => node.neoplasm?.[key] || []),
+  );
   for (const code of node.codes || []) {
+    if (neoplasmCodes.has(code)) continue;
     container.appendChild(document.createTextNode(" "));
     container.appendChild(createCodeAnchor(code));
   }
@@ -378,21 +382,25 @@ function renderNeoplasmCodes(node) {
   for (const [key, label] of NEOPLASM_FIELDS) {
     const values = node.neoplasm?.[key] || [];
     if (!values.length) continue;
-    const item = document.createElement("span");
+    const item = document.createElement("div");
     item.className = "neoplasm-item";
     const name = document.createElement("span");
     name.className = "neoplasm-label";
-    name.textContent = `${label}：`;
+    name.textContent = label;
     item.appendChild(name);
+    const codes = document.createElement("span");
+    codes.className = "neoplasm-codes";
     values.forEach((code, index) => {
-      if (index) item.appendChild(document.createTextNode(" "));
-      item.appendChild(createCodeAnchor(code));
+      if (index) codes.appendChild(document.createTextNode(" "));
+      codes.appendChild(createCodeAnchor(code));
     });
+    item.appendChild(codes);
     rows.push(item);
   }
   if (!rows.length) return null;
   const grid = document.createElement("div");
   grid.className = "neoplasm-grid";
+  grid.setAttribute("aria-label", "肿瘤表编码");
   rows.forEach((item) => grid.appendChild(item));
   return grid;
 }
