@@ -1,4 +1,13 @@
-将正式 ICD-10 索引 CSV 放在本目录。
+正式 ICD-10 索引按影像页范围拆分，每 50 页一个 CSV。例如：
+
+```text
+rows-p0001-0050.csv
+rows-p0051-0100.csv
+...
+rows-p1451-1500.csv
+```
+
+每个文件都保留相同的表头。页码范围写入文件名，补足四位数字；默认构建会按文件名顺序合并所有分片，便于按页段审阅和比较变更。
 
 默认构建规则：
 
@@ -13,8 +22,10 @@
 node workers/scripts/build.mjs
 ```
 
-显式指定文件：
+默认构建会读取本目录全部正式 CSV。显式指定文件时，只会构建列出的分片：
 
 ```bash
-node workers/scripts/build.mjs --input data/source/icd10_index.csv
+node workers/scripts/build.mjs \
+  --input data/source/rows-p0001-0050.csv \
+  --input data/source/rows-p0051-0100.csv
 ```

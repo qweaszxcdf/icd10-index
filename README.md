@@ -74,13 +74,16 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 data/source/
 ```
 
-建议命名：
+正式索引按影像页每 50 页分成一个 CSV，文件名写明页码范围：
 
 ```text
-data/source/icd10_index.csv
+data/source/rows-p0001-0050.csv
+data/source/rows-p0051-0100.csv
+...
+data/source/rows-p1451-1500.csv
 ```
 
-如果目录中存在非 `.sample.` CSV，默认构建会自动忽略样例文件。
+每个分片都包含表头。默认构建会按文件名排序并读取所有非 `.sample.` CSV，因此直接运行构建命令即可生成完整索引。保留补零后的页码格式，确保分片顺序稳定。
 
 ## 构建
 
@@ -95,10 +98,10 @@ npm run build
 node workers/scripts/build.mjs
 ```
 
-显式指定文件：
+显式指定文件（只构建所选分片）：
 
 ```bash
-node workers/scripts/build.mjs --input data/source/icd10_index.csv
+node workers/scripts/build.mjs --input data/source/rows-p0001-0050.csv
 ```
 
 多个分片按顺序传入：
@@ -289,6 +292,11 @@ npm run check
 icd10-index/
 ├── data/
 │   └── source/
+│       ├── rows-p0001-0050.csv
+│       ├── rows-p0051-0100.csv
+│       ├── ...
+│       ├── rows-p1451-1500.csv
+│       ├── README.md
 │       └── icd10_index.sample.csv
 ├── migrations/
 │   └── 0001_feedback.sql
