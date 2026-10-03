@@ -224,28 +224,73 @@ function clientLocateMatch(row, target) {
   return false;
 }
 
+function clientLocateExactMatch(row, target) {
+  const lower = normalizeText(target).toLowerCase();
+  return [row[ROW_ENGLISH], row[ROW_CHINESE]]
+    .some((value) => normalizeText(value).toLowerCase() === lower);
+}
+
 function clientLocate(dataset, target) {
   const normalized = normalizeText(target).toLowerCase();
   if (looksLikeIcdQuery(normalized)) {
     const exact = dataset.code_index?.[normalizeCode(normalized)] || [];
     if (exact.length) return exact[0];
   }
+
   const parts = normalized.split(/[，,]/).map((part) => part.trim()).filter(Boolean);
-  const candidates = dataset.rows.map((row, index) => ({ index, row }))
-    .filter(({ row }) => clientLocateMatch(row, parts[0] || normalized));
-  if (parts.length === 1) return candidates.sort((a, b) => a.row[ROW_LEVEL] - b.row[ROW_LEVEL] || a.index - b.index)[0]?.index ?? -1;
+  const firstPart = parts[0] || normalized;
+  const candidates = dataset.rows
+    .map((row, index) => ({
+      index,
+      row,
+      exact: clientLocateExactMatch(row, firstPart),
+    }))
+    .filter(({ row }) => clientLocateMatch(row, firstPart))
+    .sort((left, right) =>
+      left.row[ROW_LEVEL] - right.row[ROW_LEVEL]
+      || Number(right.exact) - Number(left.exact)
+      || left.index - right.index);
+
+  if (parts.length <= 1) return candidates[0]?.index ?? -1;
+
   for (const candidate of candidates) {
     let current = candidate.index;
     let partIndex = 1;
+
     while (partIndex < parts.length) {
       const end = dataset.rows[current][ROW_SUBTREE_END];
-      const next = dataset.rows.slice(current + 1, end).findIndex((row) => row[ROW_PARENT] === current && clientLocateMatch(row, parts[partIndex]));
-      if (next < 0) break;
-      current = current + 1 + next;
+      let next = -1;
+
+      for (let index = current + 1; index < end; index += 1) {
+        const row = dataset.rows[index];
+        if (row[ROW_PARENT] !== current) continue;
+        if (clientLocateMatch(row, parts[partIndex])) {
+          next = index;
+          break;
+        }
+      }
+
+      if (next < 0) {
+        for (let index = current + 1; index < end; index += 1) {
+          if (clientLocateMatch(dataset.rows[index], parts[partIndex])) {
+            next = index;
+            break;
+          }
+        }
+      }
+
+      if (next < 0) {
+        if (!clientLocateMatch(dataset.rows[current], parts[partIndex])) break;
+      } else {
+        current = next;
+      }
+
       partIndex += 1;
     }
+
     if (partIndex === parts.length) return current;
   }
+
   return candidates[0]?.index ?? -1;
 }
 
