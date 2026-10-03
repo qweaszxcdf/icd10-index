@@ -601,10 +601,6 @@ export default {
     try {
       const url = new URL(request.url);
       if (url.pathname === "/api/feedback") return handleFeedback(request, env);
-      if (url.pathname === "/api/search") return handleSearch(request, env);
-      if (url.pathname === "/api/children") return handleChildren(request, env);
-      if (url.pathname === "/api/locate") return handleLocate(request, env);
-      if (url.pathname === "/api/meta") return handleMeta(request, env);
       return env.ASSETS.fetch(request);
     } catch (error) {
       return errorResponse(error);

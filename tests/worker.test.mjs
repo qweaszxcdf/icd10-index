@@ -81,13 +81,9 @@ test("neoplasm codes are exposed by behavior column", () => {
   assert.deepEqual(node.neoplasm.uncertain_or_unspecified, ["D38.1"]);
 });
 
-test("Worker API serves search results from static asset dataset", async () => {
+test("non-feedback query APIs are not exposed by the Worker", async () => {
   const response = await worker.fetch(new Request("https://example.test/api/search?q=Q07.0&mode=auto"), env);
-  assert.equal(response.status, 200);
-  const payload = await response.json();
-  assert.equal(payload.count, 1);
-  assert.equal(payload.tree.length, 1);
-  assert.equal(payload.tree[0].codes[0], "Q07.0");
+  assert.equal(response.status, 404);
 });
 
 test("feedback API writes unified record to D1 with project key", async () => {

@@ -1,8 +1,8 @@
 # icd10-index
 
-参考 [`qweaszxcdf/icd9cm3-index`](https://github.com/qweaszxcdf/icd9cm3-index) 的树形检索与 Cloudflare Worker 部署方式，为中国版 ICD-10 第三卷字母顺序索引 CSV 构建的只读检索站点。
+参考 [`qweaszxcdf/icd9cm3-index`](https://github.com/qweaszxcdf/icd9cm3-index) 的树形检索方式，为中国版 ICD-10 第三卷字母顺序索引 CSV 构建的只读检索站点。检索、定位和子节点展开均在浏览器端基于静态 `dataset.json` 完成。
 
-本版本为**完全 Node.js 实现**：CSV 解析、字段清洗、树结构重建、数据集生成、测试及 Cloudflare Worker 均不依赖 Python。
+本版本为**完全 Node.js 实现**：CSV 解析、字段清洗、树结构重建、数据集生成和测试均不依赖 Python。Cloudflare Worker 仅用于提交反馈到 D1。
 
 ## 功能
 
@@ -10,7 +10,7 @@
 - 所有 level 都会计算 `parent_index` 和 `subtree_end`，因此 `level 0`、`level 1` 也可以展开；检索结果补齐父级时从 `level 2` 开始，不显示 level 0/1 作为检索层级。
 - 完全忽略 CSV 原有的 `parent`、`subtreeEnd` 值。
 - 搜索结果自动携带祖先路径。
-- 子节点通过 `/api/children` 按需加载。
+- 子节点直接从浏览器已加载的静态 `dataset.json` 按需展开。
 - 支持浏览整个索引、展开全部、折叠全部。
 - 主编码及肿瘤表五类编码均可点击。
 - 编码跳转地址：`https://icd10.pages.dev/?code=<编码>`。
@@ -185,7 +185,7 @@ npx wrangler d1 create feedback
 npm run db:init:remote
 ```
 
-## 部署到 Cloudflare Workers
+## Cloudflare 部署
 
 ```bash
 cd workers
@@ -194,52 +194,16 @@ npx wrangler login
 npm run deploy
 ```
 
-项目使用 Workers Static Assets：
+项目使用 Workers Static Assets，但检索功能是纯静态的：
 
-- `/api/*` 由 Worker 处理。
-- HTML、CSS、JavaScript 和数据集作为静态资源部署。
-- Worker 首次请求时从 `ASSETS` 加载 `dataset.json` 并缓存解析结果。
-- 大型数据集不会直接打包进 Worker JavaScript。
+- HTML、CSS、JavaScript 和 `dataset.json` 作为静态资源部署。
+- 搜索、定位、交叉引用和子节点展开全部在浏览器端完成。
+- 不提供 `/api/search`、`/api/children`、`/api/locate` 或 `/api/meta`。
+- Worker 仅对 `/api/feedback` 先于静态资源运行，用于写入 D1。
 
-可以在 `workers/wrangler.jsonc` 中修改 Worker 名称和路由配置。
+可以在 `workers/wrangler.jsonc` 中修改 Worker 名称和反馈路由配置。
 
-## API
-
-### 搜索
-
-```http
-GET /api/search?q=E23.0&mode=auto
-```
-
-`mode` 可选值：
-
-- `auto`：自动判断编码或文本。
-- `code`：强制按编码前缀匹配。
-- `phrase`：按完整输入短语匹配。
-
-空查询返回根节点：
-
-```http
-GET /api/search?q=&mode=auto
-```
-
-### 加载直接子节点
-
-```http
-GET /api/children?id=r1&q=阿&mode=auto
-```
-
-### 定位引用项
-
-```http
-GET /api/locate?target=Ahumada-del%20Castillo%20syndrome
-```
-
-### 数据集元信息
-
-```http
-GET /api/meta
-```
+## Feedback API
 
 ### 提交反馈
 

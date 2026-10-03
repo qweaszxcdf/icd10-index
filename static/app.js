@@ -616,29 +616,16 @@ function renderNode(node, asPath = false) {
   async function loadChildren() {
     if (loaded) return;
     const dataset = await loadClientDataset();
-    const params = new URLSearchParams({
-      id: node.id,
-      q: currentQuery,
-      mode: currentMode,
-    });
-    let data;
-    if (dataset) {
-      const startIndex = Number(node.index);
-      const end = dataset.rows[startIndex]?.[ROW_SUBTREE_END] ?? startIndex + 1;
-      const children = [];
-      for (let index = startIndex + 1; index < end; index += 1) {
-        if (dataset.rows[index][ROW_PARENT] !== startIndex) continue;
-        children.push(clientRowToJson(dataset, index, clientRowMatches(dataset.rows[index], currentQuery, currentMode)));
-      }
-      data = { children };
-    } else {
-      const response = await fetch(`/api/children?${params.toString()}`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      data = await response.json();
+    const startIndex = Number(node.index);
+    const end = dataset.rows[startIndex]?.[ROW_SUBTREE_END] ?? startIndex + 1;
+    const children = [];
+    for (let index = startIndex + 1; index < end; index += 1) {
+      if (dataset.rows[index][ROW_PARENT] !== startIndex) continue;
+      children.push(clientRowToJson(dataset, index, clientRowMatches(dataset.rows[index], currentQuery, currentMode)));
     }
     fullContainer = document.createElement("div");
     fullContainer.className = "child-list";
-    (data.children || []).forEach((child) => fullContainer.appendChild(renderNode(child, false)));
+    children.forEach((child) => fullContainer.appendChild(renderNode(child, false)));
     loaded = true;
   }
 
