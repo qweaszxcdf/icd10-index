@@ -76,10 +76,22 @@ function hierarchySearchIndices(dataset, query) {
   const tokens = normalizedSearchTokens(query);
   if (!tokens.length) return [];
 
+  const segments = normalizeText(query)
+    .toLowerCase()
+    .split(/[，,]/u)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const finalTokens = normalizedSearchTokens(segments.at(-1) || "");
+
   const matches = [];
   for (let index = 0; index < dataset.rows.length; index += 1) {
-    const text = hierarchySearchText(dataset, index);
-    if (tokens.every((token) => text.includes(token))) matches.push(index);
+    const pathText = hierarchySearchText(dataset, index);
+    if (!tokens.every((token) => pathText.includes(token))) continue;
+
+    const ownText = normalizeText(dataset.rows[index][ROW_SEARCH_BLOB]).toLowerCase();
+    if (finalTokens.length && !finalTokens.every((token) => ownText.includes(token))) continue;
+
+    matches.push(index);
   }
   return matches;
 }

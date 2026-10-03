@@ -46,7 +46,7 @@ test("multi-part locate resolves fixation device internal to T84.9", () => {
   assert.equal(dataset.rows[index][ROW_CODE], "T84.9");
 });
 
-test("auto search prioritizes a valid comma-separated locate and keeps other matching paths", () => {
+test("auto search prioritizes the canonical path and excludes descendants that only inherit the query from ancestors", () => {
   const indices = findSearchIndices(dataset, "Complications,fixation device, internal", "auto");
   assert.ok(indices.length >= 1);
   assert.equal(dataset.rows[indices[0]][ROW_ENGLISH], "fixation device, internal (orthopedic)");
@@ -54,6 +54,17 @@ test("auto search prioritizes a valid comma-separated locate and keeps other mat
 
   const unique = new Set(indices);
   assert.equal(unique.size, indices.length);
+  assert.ok(
+    indices.every((index) => {
+      const english = String(dataset.rows[index][ROW_ENGLISH] || "").toLowerCase();
+      const chinese = String(dataset.rows[index][2] || "");
+      return english.includes("internal") || chinese.includes("内");
+    }),
+  );
+  assert.ok(!indices.some((index) => dataset.rows[index][ROW_CODE] === "T84.6"));
+  assert.ok(!indices.some((index) => dataset.rows[index][ROW_CODE] === "T84.2"));
+  assert.ok(!indices.some((index) => dataset.rows[index][ROW_CODE] === "T84.1"));
+  assert.ok(!indices.some((index) => dataset.rows[index][ROW_CODE] === "T84.8"));
 });
 
 test("auto search falls back to ordinary text search when a comma-separated path is invalid", () => {
