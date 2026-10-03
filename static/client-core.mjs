@@ -63,6 +63,12 @@ export function findSearchIndices(dataset, query, mode = "auto") {
     }
     return roots;
   }
+
+  if (mode === "auto" && /[,，]/u.test(queryText)) {
+    const located = locateIndex(dataset, queryText);
+    if (located >= 0) return [located];
+  }
+
   const candidates =
     mode === "code" || (mode === "auto" && looksLikeIcdQuery(queryText))
       ? codeCandidateIndices(dataset, queryText)

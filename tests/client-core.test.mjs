@@ -46,6 +46,18 @@ test("multi-part locate resolves fixation device internal to T84.9", () => {
   assert.equal(dataset.rows[index][ROW_CODE], "T84.9");
 });
 
+test("auto search treats a valid comma-separated index path as a hierarchical locate", () => {
+  const indices = findSearchIndices(dataset, "Complications,fixation device, internal", "auto");
+  assert.equal(indices.length, 1);
+  assert.equal(dataset.rows[indices[0]][ROW_ENGLISH], "fixation device, internal (orthopedic)");
+  assert.equal(dataset.rows[indices[0]][ROW_CODE], "T84.9");
+});
+
+test("auto search falls back to ordinary text search when a comma-separated path is invalid", () => {
+  const indices = findSearchIndices(dataset, "definitely-not-a-real-parent, child", "auto");
+  assert.deepEqual(indices, []);
+});
+
 test("multi-part locate resolves parenthesized coronary graft target", () => {
   const index = locateIndex(dataset, "Complications, coronary artery (bypass) graft");
   assert.ok(index >= 0);
