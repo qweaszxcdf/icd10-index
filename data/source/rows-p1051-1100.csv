@@ -42,7 +42,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1051,4,鼻(中隔),"nasal, nose (septum)",S00.3,0.9752867221832275,,,,,
 1052,3,和肩，多处,"and shoulder, multiple .",S40.7,0.9924968481063843,,,,,
 1052,3,特指的NEC,specified NEC,S40.8,0.9556258320808411,,,,,
-1052,3,意指上肢-见损伤，浅表，肢，,"meaning upper limb - see Injury, superficial, limb, upper",,0.9897937774658203,,,,,
+1052,3,意指上肢-见损伤，浅表，肢，上,"meaning upper limb - see Injury, superficial, limb, upper",,0.9897937774658203,,,,,
 1052,4,耻骨区,pubic region,S30.8,0.9539649486541748,,,,,
 1052,4,唇,lip,S00.5,0.9105080962181091,,,,,
 1052,4,大腿,thigh,S70.9,0.9257252812385559,,,,,

@@ -1005,7 +1005,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1227,3,下肢,lower extremity,I80.3,0.9719297885894775,,,,,
 1227,4,浅表性(血管)1,superficial (vessels),I80.0,0.9318178296089172,,,,,
 1227,4,深部(血管)NEC,deep (vessels) NEC,I80.2,0.9840663075447083,,,,,
-1227,3,由于植入装置-见并发症，按部位和类型，,"due to implanted device – see Complications, by site and type, specified NEC",,0.9987122416496277,,,,,
+1227,3,由于植入装置-见并发症，按部位和类型，特指的 NEC,"due to implanted device – see Complications, by site and type, specified NEC",,0.9987122416496277,,,,,
 1227,3,特指的 NEC,specified NEC,,0.9851037859916687,,,,,
 1228,3,游走性，移行性,"migrans, migrating",I82.1,0.9641059637069702,,,,,
 1228,3,在操作中或由于操作所致 NEC,during or resulting from a procedure NEC,T81.7,0.9893814325332642,,,,,

@@ -1689,7 +1689,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 697,5,特指部位-见肿瘤，恶性,"specified site - see Neoplasm, malignant",,0.9589046835899353,,,,,
 697,5,未特指部位,unspecified site,C56,0.9640039205551147,,,,,
 697,4,粘蛋白性(M8471/3),mucinous(M8471/3),,0.9739571213722229,,,,,
-697,5,特指部位-见肿瘤，,"specified site - see Neoplasm, malignant",,0.9735308289527893,,,,,
+697,5,特指部位-见肿瘤，恶性,"specified site - see Neoplasm, malignant",,0.9735308289527893,,,,,
 697,5,未特指部位,unspecified site,C56,0.9389317035675049,,,,,
 697,4,特指部位-见肿瘤，恶性,"specified site - see Neoplasm, malignant",,0.9395332932472229,,,,,
 697,4,未特指部位,unspecified site,C56,0.9770610928535461,,,,,

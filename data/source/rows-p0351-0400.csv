@@ -1692,7 +1692,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 393,3,腿,leg,,0.9926316738128662,,,,,
 393,4,小,lower,S82.9,0.8738133907318115,,,,,
 393,5,多发性,multiple,S82.7,0.9555805325508118,,,,,
-393,4,意指下肢-见骨折，肢，,"meaning lower limb - see Fracture, limb, lower",,0.9446537494659424,,,,,
+393,4,意指下肢-见骨折，肢，下,"meaning lower limb - see Fracture, limb, lower",,0.9446537494659424,,,,,
 393,3,豌豆骨,pisiform,S62.1,0.9740646481513977,,,,,
 394,3,晚期效应-见后遗症，骨折,"late effects - see Sequelae, fracture",,0.9830362200737,,,,,
 394,3,腕部 NEC,wrist NEC,S62.8,0.9462893009185791,,,,,

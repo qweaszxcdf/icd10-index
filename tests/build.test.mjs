@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
   HIERARCHY_MIN_LEVEL,
+  ROOT_DIR,
   ROW_PARENT,
   ROW_SUBTREE_END,
   buildDataset,
   canonicalHeader,
+  parseCsvText,
   resolveHeader,
 } from "../workers/scripts/build.mjs";
 
@@ -89,4 +91,37 @@ test("source parent/subtreeEnd columns are ignored", async () => {
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
+});
+
+
+test("source cross-reference targets are not obviously truncated", async () => {
+  const sourceDir = path.join(ROOT_DIR, "data", "source");
+  const sourceFiles = (await readdir(sourceDir))
+    .filter((name) => /^rows-p\d+-\d+\.csv$/u.test(name))
+    .sort();
+
+  const problems = [];
+  for (const fileName of sourceFiles) {
+    const records = parseCsvText(await readFile(path.join(sourceDir, fileName), "utf8"));
+    records.shift();
+
+    for (const row of records) {
+      const page = String(row[0] || "");
+      const chinese = String(row[2] || "").trim();
+      const english = String(row[3] || "").trim();
+
+      const englishTruncated =
+        /\bsee(?:\s+also)?\s*$/iu.test(english)
+        || /\bsee(?:\s+also)?\s+[^;\n]*,\s*$/iu.test(english)
+        || /\bsee(?:\s+also)?\s+[^;\n]*(?:\bupp|\bpulmona|\bmaligna|\bmaligi|\bmalignan|\bconnective|\bby|\bthe)\s*$/iu.test(english);
+      const chineseTruncated =
+        /(?:另见|参见|见)\s*[^；;\n]*[，,]\s*$/u.test(chinese);
+
+      if (englishTruncated || chineseTruncated) {
+        problems.push({ fileName, page, chinese, english });
+      }
+    }
+  }
+
+  assert.deepEqual(problems, []);
 });

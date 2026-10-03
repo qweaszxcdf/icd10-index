@@ -68,6 +68,14 @@ function setSearchMode(mode) {
   return normalized;
 }
 
+function pushNavigationUrl(url) {
+  if (url.href === location.href) {
+    history.replaceState(null, "", url);
+  } else {
+    history.pushState(null, "", url);
+  }
+}
+
 function extractCodes(value) {
   const seen = new Set();
   const codes = [];
@@ -551,7 +559,7 @@ async function performSearch({ updateUrl = true } = {}) {
       else url.searchParams.delete("q");
       if (currentMode === "auto") url.searchParams.delete("mode");
       else url.searchParams.set("mode", currentMode);
-      history.replaceState(null, "", url);
+      pushNavigationUrl(url);
     }
   } catch (error) {
     if (requestId !== viewRequestId) return;
@@ -583,7 +591,7 @@ async function performLocate(target, { updateUrl = true } = {}) {
       url.searchParams.delete("q");
       url.searchParams.delete("mode");
       url.searchParams.set("locate", normalizedTarget);
-      history.replaceState(null, "", url);
+      pushNavigationUrl(url);
     }
   } catch (error) {
     if (requestId !== viewRequestId) return;
@@ -627,7 +635,7 @@ feedbackDialog.addEventListener("click", (event) => {
   if (event.target === feedbackDialog) feedbackDialog.close();
 });
 
-window.addEventListener("DOMContentLoaded", () => {
+function restoreNavigationState() {
   const url = new URL(location.href);
   const locateTarget = url.searchParams.get("locate");
   if (locateTarget) {
@@ -636,7 +644,11 @@ window.addEventListener("DOMContentLoaded", () => {
     performLocate(locateTarget, { updateUrl: false });
     return;
   }
+
   setSearchMode(url.searchParams.get("mode") || "auto");
   queryInput.value = url.searchParams.get("q") || "";
   performSearch({ updateUrl: false });
-});
+}
+
+window.addEventListener("DOMContentLoaded", restoreNavigationState);
+window.addEventListener("popstate", restoreNavigationState);

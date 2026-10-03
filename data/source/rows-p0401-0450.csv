@@ -1506,7 +1506,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 440,1,huá 滑,,,0.9521721005439758,,,,,
 440,2,"滑膜瘤(恶性)(M9040/3)-另见肿瘤，结缔组织,恶性","Synovioma (malignant) (M9040/3) - see also Neoplasm, connective tissue, malignant",,0.9873664379119873,,,,,
 440,3,良性(M9040/0)-见肿瘤，结缔组织，良性,"benign (M9040/0) - see Neoplasm, connective tissue, benign",,0.9843931198120117,,,,,
-440,2,滑膜肉瘤(M9040/3)-见肿瘤，结缔组织，恶性,"Synovial sarcoma, Synoviosarcoma (M9040/3) - see",,0.9836385250091553,,,,,
+440,2,滑膜肉瘤(M9040/3)-见肿瘤，结缔组织，恶性,"Synovial sarcoma, Synoviosarcoma (M9040/3) - see Neoplasm, connective tissue, malignant",,0.9836385250091553,,,,,
 440,2,滑膜炎,Synovitis,M65.9,0.9761775135993958,,,,,
 440,3,创伤性，近期-见扭伤,"traumatic, current - see Sprain",,0.9943702220916748,,,,,
 440,3,短暂性,transient,M67.3,0.9778773188591003,,,,,
