@@ -46,7 +46,7 @@ test("multi-part locate resolves fixation device internal to T84.9", () => {
   assert.equal(dataset.rows[index][ROW_CODE], "T84.9");
 });
 
-test("auto search prioritizes the canonical path and excludes descendants that only inherit the query from ancestors", () => {
+test("auto comma search keeps the canonical path plus other rows that directly match all query tokens", () => {
   const indices = findSearchIndices(dataset, "Complications,fixation device, internal", "auto");
   assert.ok(indices.length >= 1);
   assert.equal(dataset.rows[indices[0]][ROW_ENGLISH], "fixation device, internal (orthopedic)");
@@ -54,13 +54,14 @@ test("auto search prioritizes the canonical path and excludes descendants that o
 
   const unique = new Set(indices);
   assert.equal(unique.size, indices.length);
-  assert.ok(
-    indices.every((index) => {
-      const english = String(dataset.rows[index][ROW_ENGLISH] || "").toLowerCase();
-      const chinese = String(dataset.rows[index][2] || "");
-      return english.includes("internal") || chinese.includes("内");
-    }),
-  );
+
+  for (const index of indices.slice(1)) {
+    const text = String(dataset.rows[index][12] || "").toLowerCase();
+    for (const token of ["complications", "fixation", "device", "internal"]) {
+      assert.ok(text.includes(token), `row ${index} should directly contain ${token}`);
+    }
+  }
+
   assert.ok(!indices.some((index) => dataset.rows[index][ROW_CODE] === "T84.6"));
   assert.ok(!indices.some((index) => dataset.rows[index][ROW_CODE] === "T84.2"));
   assert.ok(!indices.some((index) => dataset.rows[index][ROW_CODE] === "T84.1"));
@@ -72,25 +73,6 @@ test("auto search falls back to ordinary text search when a comma-separated path
   assert.deepEqual(indices, []);
 });
 
-test("comma search can match terms distributed across an ancestor path", () => {
-  const indices = findSearchIndices(dataset, "Complications, mechanical", "auto");
-  assert.ok(indices.length > 0);
-  assert.ok(
-    indices.some((index) => {
-      let current = index;
-      let sawComplications = false;
-      let sawMechanical = false;
-      while (current >= 0) {
-        const row = dataset.rows[current];
-        const text = `${row[2]} ${row[3]}`.toLowerCase();
-        if (text.includes("complications") || text.includes("并发症")) sawComplications = true;
-        if (text.includes("mechanical") || text.includes("机械")) sawMechanical = true;
-        current = row[14];
-      }
-      return sawComplications && sawMechanical;
-    }),
-  );
-});
 
 test("multi-part locate resolves parenthesized coronary graft target", () => {
   const index = locateIndex(dataset, "Complications, coronary artery (bypass) graft");

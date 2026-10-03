@@ -61,37 +61,14 @@ function normalizedSearchTokens(query) {
     .filter(Boolean);
 }
 
-function hierarchySearchText(dataset, index) {
-  const parts = [];
-  let current = index;
-  while (current >= 0) {
-    const row = dataset.rows[current];
-    parts.push(normalizeText(row[ROW_SEARCH_BLOB]).toLowerCase());
-    current = row[ROW_PARENT];
-  }
-  return parts.join(" ");
-}
-
-function hierarchySearchIndices(dataset, query) {
+function commaRowSearchIndices(dataset, query) {
   const tokens = normalizedSearchTokens(query);
   if (!tokens.length) return [];
 
-  const segments = normalizeText(query)
-    .toLowerCase()
-    .split(/[，,]/u)
-    .map((part) => part.trim())
-    .filter(Boolean);
-  const finalTokens = normalizedSearchTokens(segments.at(-1) || "");
-
   const matches = [];
   for (let index = 0; index < dataset.rows.length; index += 1) {
-    const pathText = hierarchySearchText(dataset, index);
-    if (!tokens.every((token) => pathText.includes(token))) continue;
-
     const ownText = normalizeText(dataset.rows[index][ROW_SEARCH_BLOB]).toLowerCase();
-    if (finalTokens.length && !finalTokens.every((token) => ownText.includes(token))) continue;
-
-    matches.push(index);
+    if (tokens.every((token) => ownText.includes(token))) matches.push(index);
   }
   return matches;
 }
@@ -109,11 +86,11 @@ export function findSearchIndices(dataset, query, mode = "auto") {
 
   if (mode === "auto" && /[,，]/u.test(queryText)) {
     const located = locateIndex(dataset, queryText);
-    const pathMatches = hierarchySearchIndices(dataset, queryText);
+    const rowMatches = commaRowSearchIndices(dataset, queryText);
     if (located >= 0) {
-      return [located, ...pathMatches.filter((index) => index !== located)];
+      return [located, ...rowMatches.filter((index) => index !== located)];
     }
-    if (pathMatches.length) return pathMatches;
+    if (rowMatches.length) return rowMatches;
   }
 
   const candidates =
