@@ -1,89 +1,20 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
-import worker, { __test } from "../workers/src/index.js";
-
-const datasetPath = new URL("../workers/public/data/dataset.json", import.meta.url);
-const datasetText = await readFile(datasetPath, "utf8");
-const dataset = JSON.parse(datasetText);
+import worker from "../workers/src/index.js";
 
 const env = {
   ASSETS: {
-    async fetch(request) {
-      const url = new URL(request.url);
-      if (url.pathname === "/data/dataset.json") {
-        return new Response(datasetText, { headers: { "content-type": "application/json" } });
-      }
+    async fetch() {
       return new Response("not found", { status: 404 });
     },
   },
 };
 
-test("builder excludes level 0 and level 1 from hierarchy", () => {
-  assert.equal(dataset.meta.hierarchy_min_level, 2);
-  assert.equal(dataset.rows[0][14], -1);
-  assert.equal(dataset.rows[0][15], 1);
-  assert.equal(dataset.rows[1][14], -1);
-  assert.equal(dataset.rows[1][15], 2);
-  assert.equal(dataset.rows[2][14], -1);
-  assert.equal(dataset.rows[2][15], 3);
-});
-
-test("empty search returns only level 0 rows", () => {
-  const result = __test.searchRows(dataset, "", "auto");
-  assert.ok(result.treeRows.length > 0);
-  assert.ok(result.treeRows.every((row) => row.level === 0));
-});
-
-test("locate prioritizes the English exact match", () => {
-  const located = __test.findLocateIndices({
-    rows: [
-      [1, 2, "目标中文", "other", "", null, "", "", "", "", "", 0, "", "", -1, 1],
-      [1, 2, "其他", "Target English", "", null, "", "", "", "", "", 0, "", "", -1, 1],
-    ],
-  }, "target english");
-  assert.deepEqual(located, [1]);
-});
-
-test("locate follows canonical bilingual reference targets", () => {
-  assert.deepEqual(__test.findLocateIndices(dataset, "Disease, heart"), [34631]);
-});
-
-test("locate lets one index row consume multiple comma-separated reference parts", () => {
-  const located = __test.findLocateIndices(dataset, "Complications, fixation device, internal");
-  assert.equal(located.length, 1);
-  const row = dataset.rows[located[0]];
-  assert.equal(row[3], "fixation device, internal (orthopedic)");
-  assert.equal(row[4], "T84.9");
-});
-
-test("marker-only neoplasm placeholders are removed", () => {
-  assert.equal(dataset.rows[0][8], "");
-  assert.equal(dataset.rows[0][9], "");
-});
-
-test("code search no longer includes level 0 or level 1 ancestors", () => {
-  const result = __test.searchRows(dataset, "E23.0", "auto");
-  assert.equal(result.count, 1);
-  const tree = __test.buildHierarchy(result.treeRows);
-  assert.equal(tree.length, 1);
-  assert.equal(tree[0].level, 2);
-  assert.equal(tree[0].codes[0], "E23.0");
-  assert.equal(tree[0].matched, true);
-});
-
-test("neoplasm codes are exposed by behavior column", () => {
-  const node = __test.rowToJson(dataset, 8);
-  assert.deepEqual(node.neoplasm.malignant_primary, ["C34.9"]);
-  assert.deepEqual(node.neoplasm.malignant_secondary, ["C78.0"]);
-  assert.deepEqual(node.neoplasm.in_situ, ["D02.2"]);
-  assert.deepEqual(node.neoplasm.benign, ["D14.3"]);
-  assert.deepEqual(node.neoplasm.uncertain_or_unspecified, ["D38.1"]);
-});
-
-test("non-feedback query APIs are not exposed by the Worker", async () => {
-  const response = await worker.fetch(new Request("https://example.test/api/search?q=Q07.0&mode=auto"), env);
-  assert.equal(response.status, 404);
+test("non-feedback APIs are not exposed by the Worker", async () => {
+  for (const path of ["/api/search", "/api/children", "/api/locate", "/api/meta"]) {
+    const response = await worker.fetch(new Request(`https://example.test${path}`), env);
+    assert.equal(response.status, 404, path);
+  }
 });
 
 test("feedback API writes unified record to D1 with project key", async () => {
@@ -96,16 +27,13 @@ test("feedback API writes unified record to D1 with project key", async () => {
         return {
           bind(...values) {
             boundValues = values;
-            return {
-              async run() {
-                return { meta: { last_row_id: 42 } };
-              },
-            };
+            return { async run() { return { meta: { last_row_id: 42 } }; } };
           },
         };
       },
     },
   };
+
   const response = await worker.fetch(
     new Request("https://example.test/api/feedback", {
       method: "POST",
@@ -121,6 +49,7 @@ test("feedback API writes unified record to D1 with project key", async () => {
     }),
     feedbackEnv,
   );
+
   assert.equal(response.status, 201);
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.deepEqual(await response.json(), { ok: true, id: 42, message: "反馈已提交" });
@@ -142,6 +71,5 @@ test("feedback API rejects invalid feedback type", async () => {
     { ...env, DB: {} },
   );
   assert.equal(response.status, 400);
-  const payload = await response.json();
-  assert.equal(payload.ok, false);
+  assert.equal((await response.json()).ok, false);
 });

@@ -1,3 +1,25 @@
+import {
+  ROW_IMAGE_PAGE,
+  ROW_LEVEL,
+  ROW_CHINESE,
+  ROW_ENGLISH,
+  ROW_CODE,
+  ROW_CONFIDENCE,
+  ROW_MALIGNANT_PRIMARY,
+  ROW_MALIGNANT_SECONDARY,
+  ROW_IN_SITU,
+  ROW_BENIGN,
+  ROW_UNCERTAIN,
+  ROW_SOURCE_FILE,
+  ROW_PARENT,
+  ROW_SUBTREE_END,
+  extractReferencesFromText,
+  findSearchIndices,
+  locateIndex,
+  normalizeText,
+  rowMatchesSearch,
+} from "./client-core.mjs";
+
 const queryInput = document.getElementById("queryInput");
 const searchButton = document.getElementById("searchButton");
 const browseRootButton = document.getElementById("browseRootButton");
@@ -28,41 +50,15 @@ const NEOPLASM_FIELDS = [
 
 let currentQuery = "";
 let currentMode = "auto";
-let currentSearchController = null;
+let viewRequestId = 0;
 let feedbackRecord = null;
 let clientDatasetPromise = null;
 const clientSearchCache = new Map();
 const clientLocateCache = new Map();
 
-const ROW_IMAGE_PAGE = 0;
-const ROW_LEVEL = 1;
-const ROW_CHINESE = 2;
-const ROW_ENGLISH = 3;
-const ROW_CODE = 4;
-const ROW_CONFIDENCE = 5;
-const ROW_MALIGNANT_PRIMARY = 6;
-const ROW_MALIGNANT_SECONDARY = 7;
-const ROW_IN_SITU = 8;
-const ROW_BENIGN = 9;
-const ROW_UNCERTAIN = 10;
-const ROW_SOURCE_FILE = 11;
-const ROW_SEARCH_BLOB = 12;
-const ROW_NORMALIZED_CODES = 13;
-const ROW_PARENT = 14;
-const ROW_SUBTREE_END = 15;
 const ICD_CODE_RE = /\b([A-Z][0-9]{2}(?:\.[0-9A-Z]{1,8})?)[†*]?\b/gi;
 const RESULT_LIMIT = 300;
 let clientRowCache = null;
-
-function normalizeText(value) {
-  if (value === null || value === undefined) return "";
-  const text = String(value).trim();
-  return ["nan", "none", "null"].includes(text.toLowerCase()) ? "" : text;
-}
-
-function normalizeCode(value) {
-  return normalizeText(value).replace(/\s+/g, "").toLowerCase();
-}
 
 function extractCodes(value) {
   const seen = new Set();
@@ -82,7 +78,7 @@ function looksLikeIcdQuery(query) {
 
 async function loadClientDataset() {
   if (!clientDatasetPromise) {
-    clientDatasetPromise = fetch("/data/dataset.json", { cache: "force-cache" })
+    clientDatasetPromise = fetch("/data/dataset.json", { cache: "no-cache" })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
@@ -171,159 +167,18 @@ function clientCollectRelevantRows(dataset, indices) {
     .map((index) => clientRowToJson(dataset, index, matched.has(index)));
 }
 
-function clientRowMatches(row, query, mode) {
-  const queryLower = normalizeText(query).toLowerCase();
-  if (mode === "code") {
-    const codeQuery = normalizeCode(queryLower);
-    return String(row[ROW_NORMALIZED_CODES] || "").split(/\s+/).some((code) => code.startsWith(codeQuery));
-  }
-  const text = normalizeText(row[ROW_SEARCH_BLOB]).toLowerCase();
-  if (mode === "phrase") return text.includes(queryLower);
-  return queryLower.split(/\s+/).filter(Boolean).every((token) => text.includes(token));
-}
-
-function clientCodeCandidates(dataset, query) {
-  const prefix = normalizeCode(query);
-  const indices = new Set();
-  for (const [code, values] of Object.entries(dataset.code_index || {})) {
-    if (code.startsWith(prefix)) values.forEach((index) => indices.add(index));
-  }
-  return [...indices].sort((a, b) => a - b);
-}
-
 function clientSearch(dataset, query, mode) {
-  if (!query) {
-    const roots = [];
-    dataset.rows.forEach((row, index) => { if (row[ROW_LEVEL] === 0) roots.push(index); });
-    return { count: roots.length, shown: roots.length, limited: false, tree: clientBuildHierarchy(roots.map((index) => clientRowToJson(dataset, index))) };
-  }
-  let candidates = null;
-  if (mode === "code") {
-    const exact = dataset.code_index?.[normalizeCode(query)];
-    candidates = exact?.length ? exact : null;
-  } else if (mode === "auto" && looksLikeIcdQuery(query)) {
-    candidates = clientCodeCandidates(dataset, query);
-  }
-  if (!candidates) candidates = dataset.rows.map((_, index) => index);
-  const matches = candidates.filter((index) => clientRowMatches(dataset.rows[index], query, mode));
+  const matches = findSearchIndices(dataset, query, mode);
   const shown = matches.slice(0, RESULT_LIMIT);
+  const rows = query
+    ? clientCollectRelevantRows(dataset, shown)
+    : shown.map((index) => clientRowToJson(dataset, index));
   return {
     count: matches.length,
     shown: shown.length,
     limited: matches.length > shown.length,
-    tree: clientBuildHierarchy(clientCollectRelevantRows(dataset, shown)),
+    tree: clientBuildHierarchy(rows),
   };
-}
-
-function clientLocateMatch(row, target) {
-  const lower = normalizeText(target).toLowerCase();
-  for (const value of [row[ROW_ENGLISH], row[ROW_CHINESE]]) {
-    const text = normalizeText(value).toLowerCase();
-    if (text === lower || (text.startsWith(lower) && " ,-/()—，：:".includes(text[lower.length] || ""))) return true;
-  }
-  return false;
-}
-
-function clientLocateExactMatch(row, target) {
-  const lower = normalizeText(target).toLowerCase();
-  return [row[ROW_ENGLISH], row[ROW_CHINESE]]
-    .some((value) => normalizeText(value).toLowerCase() === lower);
-}
-
-function clientNormalizeLocatePhrase(value) {
-  return normalizeText(value)
-    .toLowerCase()
-    .replace(/，/g, ",")
-    .replace(/\s*,\s*/g, ",")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function clientLocatePartSpan(row, parts, startIndex) {
-  const values = [row[ROW_ENGLISH], row[ROW_CHINESE]]
-    .map(clientNormalizeLocatePhrase)
-    .filter(Boolean);
-
-  for (let span = parts.length - startIndex; span >= 1; span -= 1) {
-    const target = clientNormalizeLocatePhrase(
-      parts.slice(startIndex, startIndex + span).join(","),
-    );
-    for (const text of values) {
-      if (text === target) return span;
-      if (
-        text.startsWith(target)
-        && " ,-/()—：:".includes(text[target.length] || "")
-      ) {
-        return span;
-      }
-    }
-  }
-
-  return 0;
-}
-
-function clientLocate(dataset, target) {
-  const normalized = normalizeText(target).toLowerCase();
-  if (looksLikeIcdQuery(normalized)) {
-    const exact = dataset.code_index?.[normalizeCode(normalized)] || [];
-    if (exact.length) return exact[0];
-  }
-
-  const parts = normalized.split(/[，,]/).map((part) => part.trim()).filter(Boolean);
-  const firstPart = parts[0] || normalized;
-  const candidates = dataset.rows
-    .map((row, index) => ({
-      index,
-      row,
-      exact: clientLocateExactMatch(row, firstPart),
-      span: clientLocatePartSpan(row, parts, 0),
-    }))
-    .filter(({ span }) => span > 0)
-    .sort((left, right) =>
-      left.row[ROW_LEVEL] - right.row[ROW_LEVEL]
-      || Number(right.exact) - Number(left.exact)
-      || left.index - right.index);
-
-  for (const candidate of candidates) {
-    let current = candidate.index;
-    let partIndex = candidate.span;
-
-    while (partIndex < parts.length) {
-      const end = dataset.rows[current][ROW_SUBTREE_END];
-      let next = -1;
-      let nextSpan = 0;
-
-      for (let index = current + 1; index < end; index += 1) {
-        const row = dataset.rows[index];
-        if (row[ROW_PARENT] !== current) continue;
-        const span = clientLocatePartSpan(row, parts, partIndex);
-        if (span > 0) {
-          next = index;
-          nextSpan = span;
-          break;
-        }
-      }
-
-      if (next < 0) {
-        for (let index = current + 1; index < end; index += 1) {
-          const span = clientLocatePartSpan(dataset.rows[index], parts, partIndex);
-          if (span > 0) {
-            next = index;
-            nextSpan = span;
-            break;
-          }
-        }
-      }
-
-      if (next < 0) break;
-      current = next;
-      partIndex += nextSpan;
-    }
-
-    if (partIndex === parts.length) return current;
-  }
-
-  return candidates[0]?.index ?? -1;
 }
 
 async function clientSearchResponse(query, mode) {
@@ -343,7 +198,7 @@ async function clientLocateResponse(target) {
   const cached = clientLocateCache.get(cacheKey);
   if (cached) return cached;
   const dataset = await loadClientDataset();
-  const index = clientLocate(dataset, target);
+  const index = locateIndex(dataset, target);
   const indices = index >= 0 ? [index] : [];
   const treeRows = clientCollectRelevantRows(dataset, indices);
   const response = {
@@ -375,39 +230,18 @@ function createCodeAnchor(code) {
   return link;
 }
 
-function extractReferences(node) {
-  const refs = [];
-  const chinesePattern = /(?:另见|见)(?:\s+|[：:])([^；;)）\n]+)/gi;
-  const englishPattern = /\b(?:see also|see)\s+([^;)）;\n]+)/gi;
-  for (const match of String(node.chinese || "").matchAll(chinesePattern)) {
-    const target = match[1].trim().replace(/[\]】()（）。，、；;,.:：*]+$/u, "");
-    if (target) refs.push({ target, display: target });
-  }
-  for (const match of String(node.english || "").matchAll(englishPattern)) {
-    const target = match[1].trim().replace(/[\]】()（）.,;:*]+$/u, "");
-    if (target) refs.push({ target, display: target });
-  }
-  return refs;
-}
-
 function createReferenceAnchor(ref) {
   const link = document.createElement("a");
-  link.href = "#";
+  const targetUrl = new URL(location.href);
+  targetUrl.searchParams.delete("q");
+  targetUrl.searchParams.set("locate", ref.target);
+  link.href = targetUrl.toString();
   link.className = "ref-inline";
   link.textContent = ref.display;
-  link.addEventListener("click", async (event) => {
+  link.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    summaryEl.textContent = `正在定位：${ref.target}`;
-    try {
-      const data = await clientLocateResponse(ref.target);
-      renderSummary(data);
-      renderTree(data);
-      queryInput.value = ref.target;
-    } catch (error) {
-      console.error(error);
-      summaryEl.textContent = "定位失败，请重试。";
-    }
+    performLocate(ref.target);
   });
   return link;
 }
@@ -417,30 +251,28 @@ function appendTextWithReferenceLinks(container, text, refs) {
     container.appendChild(document.createTextNode(text || ""));
     return;
   }
-  const lower = text.toLowerCase();
-  const matches = refs
-    .map((ref) => ({ ref, index: lower.indexOf(ref.display.toLowerCase()) }))
-    .filter((item) => item.index >= 0)
-    .sort((a, b) => a.index - b.index);
-  if (!matches.length) {
-    container.appendChild(document.createTextNode(text));
-    return;
-  }
+  const matches = [...refs].sort((left, right) => left.start - right.start || right.end - left.end);
   let cursor = 0;
-  for (const match of matches) {
-    if (match.index < cursor) continue;
-    if (match.index > cursor) container.appendChild(document.createTextNode(text.slice(cursor, match.index)));
-    container.appendChild(createReferenceAnchor(match.ref));
-    cursor = match.index + match.ref.display.length;
+  for (const ref of matches) {
+    if (ref.start < cursor) continue;
+    if (ref.start > cursor) container.appendChild(document.createTextNode(text.slice(cursor, ref.start)));
+    container.appendChild(createReferenceAnchor(ref));
+    cursor = ref.end;
   }
   if (cursor < text.length) container.appendChild(document.createTextNode(text.slice(cursor)));
 }
 
 function appendNodeTitle(container, node) {
-  const refs = extractReferences(node);
-  const parts = [node.chinese, node.english].filter(Boolean).map((part) => String(part).replace(/\*{1,2}/g, ""));
+  const parts = [
+    { text: String(node.chinese || "").replace(/\*{1,2}/g, ""), language: "zh" },
+    { text: String(node.english || "").replace(/\*{1,2}/g, ""), language: "en" },
+  ].filter(({ text }) => text);
+
   if (parts.length) {
-    appendTextWithReferenceLinks(container, parts.join(" / "), refs);
+    parts.forEach((part, index) => {
+      if (index) container.appendChild(document.createTextNode(" / "));
+      appendTextWithReferenceLinks(container, part.text, extractReferencesFromText(part.text, part.language));
+    });
   } else {
     container.appendChild(document.createTextNode("(无标题)"));
   }
@@ -621,7 +453,7 @@ function renderNode(node, asPath = false) {
     const children = [];
     for (let index = startIndex + 1; index < end; index += 1) {
       if (dataset.rows[index][ROW_PARENT] !== startIndex) continue;
-      children.push(clientRowToJson(dataset, index, clientRowMatches(dataset.rows[index], currentQuery, currentMode)));
+      children.push(clientRowToJson(dataset, index, rowMatchesSearch(dataset.rows[index], currentQuery, currentMode)));
     }
     fullContainer = document.createElement("div");
     fullContainer.className = "child-list";
@@ -686,32 +518,61 @@ function renderTree(data) {
 }
 
 async function performSearch({ updateUrl = true } = {}) {
+  const requestId = ++viewRequestId;
   const query = queryInput.value.trim();
   currentQuery = query;
   currentMode = document.querySelector("input[name='searchMode']:checked")?.value || "auto";
 
-  currentSearchController?.abort();
-  currentSearchController = new AbortController();
   summaryEl.textContent = "加载中……";
   treeContainer.innerHTML = '<p class="loading">正在检索索引……</p>';
 
   try {
     const data = await clientSearchResponse(query, currentMode);
+    if (requestId !== viewRequestId) return;
     renderSummary(data);
     renderTree(data);
     if (updateUrl) {
       const url = new URL(location.href);
+      url.searchParams.delete("locate");
       if (query) url.searchParams.set("q", query);
       else url.searchParams.delete("q");
       history.replaceState(null, "", url);
     }
   } catch (error) {
-    if (error.name === "AbortError") return;
+    if (requestId !== viewRequestId) return;
     console.error(error);
     summaryEl.textContent = "检索失败，请稍后重试。";
     treeContainer.replaceChildren();
-  } finally {
-    currentSearchController = null;
+  }
+}
+
+async function performLocate(target, { updateUrl = true } = {}) {
+  const normalizedTarget = String(target ?? "").trim();
+  if (!normalizedTarget) return;
+
+  const requestId = ++viewRequestId;
+  currentQuery = "";
+  currentMode = "auto";
+  queryInput.value = normalizedTarget;
+  summaryEl.textContent = `正在定位：${normalizedTarget}`;
+  treeContainer.innerHTML = '<p class="loading">正在定位索引……</p>';
+
+  try {
+    const data = await clientLocateResponse(normalizedTarget);
+    if (requestId !== viewRequestId) return;
+    renderSummary(data);
+    renderTree(data);
+    if (updateUrl) {
+      const url = new URL(location.href);
+      url.searchParams.delete("q");
+      url.searchParams.set("locate", normalizedTarget);
+      history.replaceState(null, "", url);
+    }
+  } catch (error) {
+    if (requestId !== viewRequestId) return;
+    console.error(error);
+    summaryEl.textContent = "定位失败，请重试。";
+    treeContainer.replaceChildren();
   }
 }
 
@@ -731,10 +592,9 @@ async function toggleAllNodes(collapse) {
 
 searchButton.addEventListener("click", () => performSearch());
 queryInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    performSearch();
-  }
+  if (event.key !== "Enter" || event.isComposing || event.keyCode === 229) return;
+  event.preventDefault();
+  performSearch();
 });
 browseRootButton.addEventListener("click", () => {
   queryInput.value = "";
@@ -751,6 +611,13 @@ feedbackDialog.addEventListener("click", (event) => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-  queryInput.value = new URL(location.href).searchParams.get("q") || "";
+  const url = new URL(location.href);
+  const locateTarget = url.searchParams.get("locate");
+  if (locateTarget) {
+    queryInput.value = locateTarget;
+    performLocate(locateTarget, { updateUrl: false });
+    return;
+  }
+  queryInput.value = url.searchParams.get("q") || "";
   performSearch({ updateUrl: false });
 });

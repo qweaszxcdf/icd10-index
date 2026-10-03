@@ -123,6 +123,7 @@ node workers/scripts/build.mjs --pretty
 ```text
 workers/public/index.html
 workers/public/static/app.js
+workers/public/static/client-core.mjs
 workers/public/static/style.css
 workers/public/data/dataset.json
 workers/public/data/build-report.json
@@ -237,9 +238,10 @@ Content-Type: application/json
 
 ```bash
 node workers/scripts/build.mjs
-node --test tests/build.test.mjs tests/worker.test.mjs
+node --test tests/build.test.mjs tests/client-core.test.mjs tests/worker.test.mjs
 node --check workers/scripts/build.mjs
 node --check workers/src/index.js
+node --check workers/public/static/client-core.mjs
 node --check workers/public/static/app.js
 ```
 
