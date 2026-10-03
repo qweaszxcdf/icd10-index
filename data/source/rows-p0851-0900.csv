@@ -1807,7 +1807,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 897,4,间隔.,septum,Q21.2,0.9366582632064819,,,,,
 897,3,腹壁，先天性,"abdominal wall, congenital",Q79.5,0.9831856489181519,,,,,
 897,3,膈,diaphragm,,0.9369082450866699,,,,,
-897,4,伴有升高、膨升或疝-见疝，膈,"with elevation, eventration or hernia - see Hernia,",,0.9630537033081055,,,,,
+897,4,伴有升高、膨升或疝-见疝，膈,"with elevation, eventration or hernia - see Hernia, diaphragm",,0.9630537033081055,,,,,
 897,3,先天性,diaphragm,Q79.1,0.9679718017578125,,,,,
 897,4,伴有疝,congenital,Q79.0 Q79.1,0.9326649308204651,,,,,
 897,5,严重的(伴有疝),with hernia gross (with hernia),Q79.0,0.9569687247276306,,,,,

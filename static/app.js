@@ -17,7 +17,6 @@ import {
   findSearchIndices,
   locateIndex,
   normalizeText,
-  rowMatchesSearch,
 } from "./client-core.mjs";
 
 const queryInput = document.getElementById("queryInput");
@@ -50,6 +49,7 @@ const NEOPLASM_FIELDS = [
 
 let currentQuery = "";
 let currentMode = "auto";
+let currentMatchIndices = new Set();
 let viewRequestId = 0;
 let feedbackRecord = null;
 let clientDatasetPromise = null;
@@ -58,7 +58,15 @@ const clientLocateCache = new Map();
 
 const ICD_CODE_RE = /\b([A-Z][0-9]{2}(?:\.[0-9A-Z]{1,8})?)[†*]?\b/gi;
 const RESULT_LIMIT = 300;
+const SEARCH_MODES = new Set(["auto", "code", "phrase"]);
 let clientRowCache = null;
+
+function setSearchMode(mode) {
+  const normalized = SEARCH_MODES.has(mode) ? mode : "auto";
+  const radio = document.querySelector(`input[name="searchMode"][value="${normalized}"]`);
+  if (radio) radio.checked = true;
+  return normalized;
+}
 
 function extractCodes(value) {
   const seen = new Set();
@@ -177,6 +185,7 @@ function clientSearch(dataset, query, mode) {
     count: matches.length,
     shown: shown.length,
     limited: matches.length > shown.length,
+    match_indices: matches,
     tree: clientBuildHierarchy(rows),
   };
 }
@@ -206,6 +215,7 @@ async function clientLocateResponse(target) {
     count: indices.length,
     shown: indices.length,
     limited: false,
+    match_indices: indices,
     rows: indices.map((item) => clientRowToJson(dataset, item, true)),
     tree: clientBuildHierarchy(treeRows),
   };
@@ -453,7 +463,7 @@ function renderNode(node, asPath = false) {
     const children = [];
     for (let index = startIndex + 1; index < end; index += 1) {
       if (dataset.rows[index][ROW_PARENT] !== startIndex) continue;
-      children.push(clientRowToJson(dataset, index, rowMatchesSearch(dataset.rows[index], currentQuery, currentMode)));
+      children.push(clientRowToJson(dataset, index, currentMatchIndices.has(index)));
     }
     fullContainer = document.createElement("div");
     fullContainer.className = "child-list";
@@ -521,7 +531,9 @@ async function performSearch({ updateUrl = true } = {}) {
   const requestId = ++viewRequestId;
   const query = queryInput.value.trim();
   currentQuery = query;
-  currentMode = document.querySelector("input[name='searchMode']:checked")?.value || "auto";
+  currentMode = setSearchMode(
+    document.querySelector("input[name='searchMode']:checked")?.value || "auto",
+  );
 
   summaryEl.textContent = "加载中……";
   treeContainer.innerHTML = '<p class="loading">正在检索索引……</p>';
@@ -529,6 +541,7 @@ async function performSearch({ updateUrl = true } = {}) {
   try {
     const data = await clientSearchResponse(query, currentMode);
     if (requestId !== viewRequestId) return;
+    currentMatchIndices = new Set(data.match_indices || []);
     renderSummary(data);
     renderTree(data);
     if (updateUrl) {
@@ -536,6 +549,8 @@ async function performSearch({ updateUrl = true } = {}) {
       url.searchParams.delete("locate");
       if (query) url.searchParams.set("q", query);
       else url.searchParams.delete("q");
+      if (currentMode === "auto") url.searchParams.delete("mode");
+      else url.searchParams.set("mode", currentMode);
       history.replaceState(null, "", url);
     }
   } catch (error) {
@@ -552,7 +567,7 @@ async function performLocate(target, { updateUrl = true } = {}) {
 
   const requestId = ++viewRequestId;
   currentQuery = "";
-  currentMode = "auto";
+  currentMode = setSearchMode("auto");
   queryInput.value = normalizedTarget;
   summaryEl.textContent = `正在定位：${normalizedTarget}`;
   treeContainer.innerHTML = '<p class="loading">正在定位索引……</p>';
@@ -560,11 +575,13 @@ async function performLocate(target, { updateUrl = true } = {}) {
   try {
     const data = await clientLocateResponse(normalizedTarget);
     if (requestId !== viewRequestId) return;
+    currentMatchIndices = new Set(data.match_indices || []);
     renderSummary(data);
     renderTree(data);
     if (updateUrl) {
       const url = new URL(location.href);
       url.searchParams.delete("q");
+      url.searchParams.delete("mode");
       url.searchParams.set("locate", normalizedTarget);
       history.replaceState(null, "", url);
     }
@@ -614,10 +631,12 @@ window.addEventListener("DOMContentLoaded", () => {
   const url = new URL(location.href);
   const locateTarget = url.searchParams.get("locate");
   if (locateTarget) {
+    setSearchMode("auto");
     queryInput.value = locateTarget;
     performLocate(locateTarget, { updateUrl: false });
     return;
   }
+  setSearchMode(url.searchParams.get("mode") || "auto");
   queryInput.value = url.searchParams.get("q") || "";
   performSearch({ updateUrl: false });
 });

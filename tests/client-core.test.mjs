@@ -21,6 +21,14 @@ test("Chinese references work without whitespace after 见/另见", () => {
   assert.equal(refs[0].target, "并发症，冠状动脉(搭桥术)移植物");
 });
 
+test("见于 is an index phrase, not a cross-reference marker", () => {
+  assert.deepEqual(extractReferencesFromText("见于(由于)", "zh"), []);
+  assert.deepEqual(extractReferencesFromText("见于糖尿病母亲的婴儿", "zh"), []);
+  const refs = extractReferencesFromText("见三体性，13", "zh");
+  assert.equal(refs.length, 1);
+  assert.equal(refs[0].target, "三体性，13");
+});
+
 test("reference parser preserves balanced parentheses in English targets", () => {
   const refs = extractReferencesFromText(
     "aortocoronary (bypass) graft - see Complications, coronary artery (bypass) graft",
@@ -89,4 +97,21 @@ test("code mode remains a prefix search when an exact code exists", () => {
   const codes = new Set(indices.map((index) => dataset.rows[index][ROW_CODE]));
   assert.ok(codes.has("E23.0"));
   assert.ok([...codes].some((code) => String(code).startsWith("E23.") && code !== "E23.0"));
+});
+
+test("known split references are merged in source data", () => {
+  const byChinese = (text) => dataset.rows.find((row) => String(row[2] || "") === text);
+
+  assert.equal(
+    byChinese("黑釉质母细胞瘤[黑素性釉质母细胞瘤](M9363/0)-见肿瘤，骨，良性")?.[3],
+    "Melanoameloblastoma (M9363/0) - see Neoplasm, bone, benign",
+  );
+  assert.equal(
+    byChinese("淋巴瘤性乳头状囊腺瘤[沃辛瘤](M8561/0)-见肿瘤，涎腺，良性")?.[3],
+    "Warthin's tumor (M8561/0) - see Neoplasm, salivary gland, benign",
+  );
+  assert.equal(
+    byChinese("帕特南(-达纳)病或综合征[亚急性脊髓联合变性]-见变性，混合")?.[3],
+    "Putnam(-Dana) disease or syndrome - see Degeneration, combined",
+  );
 });

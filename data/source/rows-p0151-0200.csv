@@ -1168,7 +1168,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 182,3,甲状旁(腺)(自发性),parathyroid (gland) (spontaneous),E21.4,0.9664762020111084,,,,,
 182,3,甲状腺(囊肿),thyroid (cyst) (gland),E07.8,0.9651618599891663,,,,,
 182,3,结肠,colon,K92.2,0.991334855556488,,,,,
-182,3,"结核性NEC-见结核,","tuberculous NEC - see Tuberculosis, pulmonary",,0.949367105960846,,,,,
+182,3,结核性NEC-见结核，肺,"tuberculous NEC - see Tuberculosis, pulmonary",,0.949367105960846,,,,,
 182,3,结膜，结膜下,"conjunctiva, ubconjunctival",H11.3,0.9955083131790161,,,,,
 182,4,产伤,birth injury,P15.3,0.9596675634384155,,,,,
 182,4,新生儿,newborn,P54.8,0.9836161732673645,,,,,

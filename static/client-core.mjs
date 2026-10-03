@@ -232,6 +232,8 @@ function trimReferenceRange(text, start, end) {
 }
 
 function chineseMarkerAllowed(text, index, marker) {
+  const nextChar = text[index + marker.length] || "";
+  if (nextChar === "于") return false;
   if (marker !== "见") return true;
   if (index === 0) return true;
   return /[\s\-—–(（；;，,:：]/u.test(text[index - 1]);

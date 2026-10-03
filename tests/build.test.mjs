@@ -31,7 +31,7 @@ test("markdown-like headers are canonicalized", () => {
   assert.equal(resolved.benign, 9);
 });
 
-test("level 0 and level 1 are excluded from hierarchy calculation", async () => {
+test("level 0 and level 1 remain display parents while level 2 starts search-result ancestry", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "icd10-index-"));
   try {
     const inputPath = path.join(tempDir, "input.csv");
@@ -51,14 +51,14 @@ test("level 0 and level 1 are excluded from hierarchy calculation", async () => 
 
     assert.equal(HIERARCHY_MIN_LEVEL, 2);
     assert.equal(dataset.rows[0][ROW_PARENT], -1);
-    assert.equal(dataset.rows[0][ROW_SUBTREE_END], 1);
-    assert.equal(dataset.rows[1][ROW_PARENT], -1);
-    assert.equal(dataset.rows[1][ROW_SUBTREE_END], 2);
-    assert.equal(dataset.rows[2][ROW_PARENT], -1);
+    assert.equal(dataset.rows[0][ROW_SUBTREE_END], 5);
+    assert.equal(dataset.rows[1][ROW_PARENT], 0);
+    assert.equal(dataset.rows[1][ROW_SUBTREE_END], 5);
+    assert.equal(dataset.rows[2][ROW_PARENT], 1);
     assert.equal(dataset.rows[2][ROW_SUBTREE_END], 4);
     assert.equal(dataset.rows[3][ROW_PARENT], 2);
     assert.equal(dataset.rows[3][ROW_SUBTREE_END], 4);
-    assert.equal(dataset.rows[4][ROW_PARENT], -1);
+    assert.equal(dataset.rows[4][ROW_PARENT], 1);
     assert.equal(dataset.rows[4][ROW_SUBTREE_END], 5);
     assert.equal(dataset.meta.hierarchy_ignored_row_count, 2);
     assert.equal(report.warning_count, 0);

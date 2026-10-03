@@ -494,7 +494,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1264,4,先天性,congenital,Q64.1,0.9706206321716309,,,,,
 1264,3,脾(先天性),spleen (congenital),Q89.0,0.9858672022819519,,,,,
 1264,3,气管(先天性),trachea (congenital),Q32.1,0.9779351949691772,,,,,
-1264,3,器官或部位，先天性NEC-见错位，先天性,"organ or site, congenital NEC - see Malposition,",,0.9932875633239746,,,,,
+1264,3,器官或部位，先天性NEC-见错位，先天性,"organ or site, congenital NEC - see Malposition, congenital",,0.9932875633239746,,,,,
 1264,3,上皮,congenital,,0.9703555703163147,,,,,
 1264,3,宫颈柱状,epithelium,N87.9,0.9453520178794861,,,,,
 1264,4,骰形，超出外口的限界,"columnar, of cervix",Q51.8 N87.9,0.9889978766441345,,,,,

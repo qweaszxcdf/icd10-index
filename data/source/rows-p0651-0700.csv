@@ -1569,7 +1569,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 694,1,nǎi 奶,,,0.9279509782791138,,,,,
 694,2,奶酪工人肺,Cheese-worker's lung,J67.8,0.9844411611557007,,,,,
 694,1,nài 奈,,,0.9999237060546875,,,,,
-694,2,奈瑟球菌感染NEC- 见淋球菌,Neisserian infection NEC - see,,0.969447910785675,,,,,
+694,2,奈瑟球菌感染NEC- 见淋球菌,Neisserian infection NEC - see Gonococcus,,0.969447910785675,,,,,
 694,2,奈泽洛夫综合征[胸腺发育异常综合征],Nezelof's syndrome,D81.4,0.9995478987693787,,,,,
 694,1,nài 耐,,,0.9632498025894165,,,,,
 694,2,耐受不良 -现译名 不耐受,Intolerance,,0.9561914205551147,,,,,

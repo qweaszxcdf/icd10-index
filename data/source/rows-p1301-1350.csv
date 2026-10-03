@@ -144,7 +144,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1304,4,引起痴呆,dementia in,G30.9+ F00.9*,0.9766094088554382,,,,,
 1304,3,斑块状,plaques,G35,0.9582130908966064,,,,,
 1304,3,瓣膜(心脏)-见心内膜炎,"valve, valvular (heart) – see Endocarditis",,0.9645019769668579,,,,,
-1304,3,背侧索(脊髓)-见变性，混合,"dorsolateral (spinal cord) – see Degeneration,",,0.9748837947845459,,,,,
+1304,3,背侧索(脊髓)-见变性，混合,"dorsolateral (spinal cord) – see Degeneration, combined",,0.9748837947845459,,,,,
 1304,4,播散性,combined,G35,0.9997931718826294,,,,,
 1304,3,侧索(肌萎缩型)(下行性)(原发性)(脊髓),lateral (amyotrophic) (descending) (primary) (spinal),G12.2,0.9754370450973511,,,,,
 1304,3,大脑－见硬化，脑,"cerebral- see Sclerosis, brain",,0.9261338710784912,,,,,
