@@ -49,6 +49,14 @@ test("locate follows canonical bilingual reference targets", () => {
   assert.deepEqual(__test.findLocateIndices(dataset, "Disease, heart"), [34631]);
 });
 
+test("locate lets one index row consume multiple comma-separated reference parts", () => {
+  const located = __test.findLocateIndices(dataset, "Complications, fixation device, internal");
+  assert.equal(located.length, 1);
+  const row = dataset.rows[located[0]];
+  assert.equal(row[3], "fixation device, internal (orthopedic)");
+  assert.equal(row[4], "T84.9");
+});
+
 test("marker-only neoplasm placeholders are removed", () => {
   assert.equal(dataset.rows[0][8], "");
   assert.equal(dataset.rows[0][9], "");

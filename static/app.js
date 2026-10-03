@@ -230,6 +230,38 @@ function clientLocateExactMatch(row, target) {
     .some((value) => normalizeText(value).toLowerCase() === lower);
 }
 
+function clientNormalizeLocatePhrase(value) {
+  return normalizeText(value)
+    .toLowerCase()
+    .replace(/，/g, ",")
+    .replace(/\s*,\s*/g, ",")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function clientLocatePartSpan(row, parts, startIndex) {
+  const values = [row[ROW_ENGLISH], row[ROW_CHINESE]]
+    .map(clientNormalizeLocatePhrase)
+    .filter(Boolean);
+
+  for (let span = parts.length - startIndex; span >= 1; span -= 1) {
+    const target = clientNormalizeLocatePhrase(
+      parts.slice(startIndex, startIndex + span).join(","),
+    );
+    for (const text of values) {
+      if (text === target) return span;
+      if (
+        text.startsWith(target)
+        && " ,-/()—：:".includes(text[target.length] || "")
+      ) {
+        return span;
+      }
+    }
+  }
+
+  return 0;
+}
+
 function clientLocate(dataset, target) {
   const normalized = normalizeText(target).toLowerCase();
   if (looksLikeIcdQuery(normalized)) {
@@ -244,48 +276,48 @@ function clientLocate(dataset, target) {
       index,
       row,
       exact: clientLocateExactMatch(row, firstPart),
+      span: clientLocatePartSpan(row, parts, 0),
     }))
-    .filter(({ row }) => clientLocateMatch(row, firstPart))
+    .filter(({ span }) => span > 0)
     .sort((left, right) =>
       left.row[ROW_LEVEL] - right.row[ROW_LEVEL]
       || Number(right.exact) - Number(left.exact)
       || left.index - right.index);
 
-  if (parts.length <= 1) return candidates[0]?.index ?? -1;
-
   for (const candidate of candidates) {
     let current = candidate.index;
-    let partIndex = 1;
+    let partIndex = candidate.span;
 
     while (partIndex < parts.length) {
       const end = dataset.rows[current][ROW_SUBTREE_END];
       let next = -1;
+      let nextSpan = 0;
 
       for (let index = current + 1; index < end; index += 1) {
         const row = dataset.rows[index];
         if (row[ROW_PARENT] !== current) continue;
-        if (clientLocateMatch(row, parts[partIndex])) {
+        const span = clientLocatePartSpan(row, parts, partIndex);
+        if (span > 0) {
           next = index;
+          nextSpan = span;
           break;
         }
       }
 
       if (next < 0) {
         for (let index = current + 1; index < end; index += 1) {
-          if (clientLocateMatch(dataset.rows[index], parts[partIndex])) {
+          const span = clientLocatePartSpan(dataset.rows[index], parts, partIndex);
+          if (span > 0) {
             next = index;
+            nextSpan = span;
             break;
           }
         }
       }
 
-      if (next < 0) {
-        if (!clientLocateMatch(dataset.rows[current], parts[partIndex])) break;
-      } else {
-        current = next;
-      }
-
-      partIndex += 1;
+      if (next < 0) break;
+      current = next;
+      partIndex += nextSpan;
     }
 
     if (partIndex === parts.length) return current;

@@ -231,41 +231,81 @@ function rowMatchesLocateTarget(row, target, strictPrefix = false) {
   return Boolean(remainder && " ,-/()—".includes(remainder[0]));
 }
 
+function normalizeLocatePhrase(value) {
+  return normalizeText(value)
+    .toLowerCase()
+    .replace(/，/g, ",")
+    .replace(/\s*,\s*/g, ",")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function rowLocatePartSpan(row, parts, startIndex) {
+  const values = [row[ROW_ENGLISH], row[ROW_CHINESE]]
+    .map(normalizeLocatePhrase)
+    .filter(Boolean);
+
+  for (let span = parts.length - startIndex; span >= 1; span -= 1) {
+    const target = normalizeLocatePhrase(
+      parts.slice(startIndex, startIndex + span).join(","),
+    );
+    for (const text of values) {
+      if (text === target) return span;
+      if (
+        text.startsWith(target)
+        && " ,-/()—：:".includes(text[target.length] || "")
+      ) {
+        return span;
+      }
+    }
+  }
+
+  return 0;
+}
+
 function findHierarchicalLocateRows(dataset, parts) {
   const rows = dataset.rows;
   const candidates = [];
+
   for (let index = 0; index < rows.length; index += 1) {
-    if (!rowMatchesLocateTarget(rows[index], parts[0], true)) continue;
+    const initialSpan = rowLocatePartSpan(rows[index], parts, 0);
+    if (!initialSpan) continue;
+
     let currentIndex = index;
-    let success = true;
-    for (const part of parts.slice(1)) {
+    let partIndex = initialSpan;
+
+    while (partIndex < parts.length) {
       const subtreeEnd = rows[currentIndex][ROW_SUBTREE_END];
       let foundIndex = -1;
+      let foundSpan = 0;
+
       for (let cursor = currentIndex + 1; cursor < subtreeEnd; cursor += 1) {
         if (rows[cursor][ROW_PARENT] !== currentIndex) continue;
-        if (rowMatchesLocateTarget(rows[cursor], part, true)) {
+        const span = rowLocatePartSpan(rows[cursor], parts, partIndex);
+        if (span > 0) {
           foundIndex = cursor;
+          foundSpan = span;
           break;
         }
       }
+
       if (foundIndex === -1) {
         for (let cursor = currentIndex + 1; cursor < subtreeEnd; cursor += 1) {
-          if (rowMatchesLocateTarget(rows[cursor], part, true)) {
+          const span = rowLocatePartSpan(rows[cursor], parts, partIndex);
+          if (span > 0) {
             foundIndex = cursor;
+            foundSpan = span;
             break;
           }
         }
       }
-      if (foundIndex === -1) {
-        if (!rowMatchesLocateTarget(rows[currentIndex], part, true)) {
-          success = false;
-          break;
-        }
-      } else {
-        currentIndex = foundIndex;
-      }
+
+      if (foundIndex === -1) break;
+      currentIndex = foundIndex;
+      partIndex += foundSpan;
     }
-    if (success) {
+
+    if (partIndex === parts.length) {
       candidates.push({
         index: currentIndex,
         firstExact: rowMatchesLocateTarget(rows[index], parts[0]),
@@ -273,6 +313,7 @@ function findHierarchicalLocateRows(dataset, parts) {
       });
     }
   }
+
   candidates.sort((left, right) =>
     left.parentLevel - right.parentLevel
     || Number(right.firstExact) - Number(left.firstExact)
@@ -282,18 +323,24 @@ function findHierarchicalLocateRows(dataset, parts) {
 
 function findOrderedLocateRows(dataset, parts) {
   const rows = dataset.rows;
+
   for (let index = 0; index < rows.length; index += 1) {
-    if (!rowMatchesLocateTarget(rows[index], parts[0], true)) continue;
+    const initialSpan = rowLocatePartSpan(rows[index], parts, 0);
+    if (!initialSpan) continue;
+
     let currentIndex = index;
-    let partIndex = 1;
+    let partIndex = initialSpan;
+
     for (let cursor = index + 1; cursor < rows.length && partIndex < parts.length; cursor += 1) {
-      if (rowMatchesLocateTarget(rows[cursor], parts[partIndex], true)) {
-        currentIndex = cursor;
-        partIndex += 1;
-      }
+      const span = rowLocatePartSpan(rows[cursor], parts, partIndex);
+      if (!span) continue;
+      currentIndex = cursor;
+      partIndex += span;
     }
+
     if (partIndex === parts.length) return [currentIndex];
   }
+
   return [];
 }
 
