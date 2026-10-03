@@ -52,6 +52,7 @@ let currentMode = "auto";
 let currentMatchIndices = new Set();
 let viewRequestId = 0;
 let feedbackRecord = null;
+let feedbackCloseTimer = null;
 let clientDatasetPromise = null;
 const clientSearchCache = new Map();
 const clientLocateCache = new Map();
@@ -252,6 +253,7 @@ function createReferenceAnchor(ref) {
   const link = document.createElement("a");
   const targetUrl = new URL(location.href);
   targetUrl.searchParams.delete("q");
+  targetUrl.searchParams.delete("mode");
   targetUrl.searchParams.set("locate", ref.target);
   link.href = targetUrl.toString();
   link.className = "ref-inline";
@@ -353,7 +355,20 @@ function feedbackRecordPayload(node) {
   };
 }
 
+function clearFeedbackCloseTimer() {
+  if (feedbackCloseTimer !== null) {
+    window.clearTimeout(feedbackCloseTimer);
+    feedbackCloseTimer = null;
+  }
+}
+
+function closeFeedback() {
+  clearFeedbackCloseTimer();
+  feedbackDialog.close();
+}
+
 function openFeedback(node = null) {
+  clearFeedbackCloseTimer();
   feedbackRecord = node;
   const parentTitle = node?.hierarchy_path?.length
     ? `父项：${node.hierarchy_path
@@ -376,9 +391,11 @@ function openFeedback(node = null) {
 
 async function submitFeedback(event) {
   event.preventDefault();
+  clearFeedbackCloseTimer();
   feedbackSubmitButton.disabled = true;
   feedbackSubmitButton.textContent = "正在提交……";
   feedbackStatus.textContent = "正在提交……";
+  let submitted = false;
   try {
     const response = await fetch("/api/feedback", {
       method: "POST",
@@ -394,13 +411,19 @@ async function submitFeedback(event) {
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.ok) throw new Error(result.error || "提交失败");
+    submitted = true;
     feedbackStatus.textContent = `反馈已提交${result.id ? `，编号 ${result.id}` : ""}`;
-    window.setTimeout(() => feedbackDialog.close(), 1000);
+    feedbackCloseTimer = window.setTimeout(() => {
+      feedbackCloseTimer = null;
+      feedbackDialog.close();
+    }, 1000);
   } catch (error) {
     feedbackStatus.textContent = error instanceof Error ? error.message : "提交失败，请稍后重试。";
   } finally {
-    feedbackSubmitButton.disabled = false;
-    feedbackSubmitButton.textContent = "提交反馈";
+    if (!submitted) {
+      feedbackSubmitButton.disabled = false;
+      feedbackSubmitButton.textContent = "提交反馈";
+    }
   }
 }
 
@@ -628,11 +651,11 @@ browseRootButton.addEventListener("click", () => {
 expandAllButton.addEventListener("click", () => toggleAllNodes(false));
 collapseAllButton.addEventListener("click", () => toggleAllNodes(true));
 feedbackGeneralButton.addEventListener("click", () => openFeedback(null));
-feedbackCloseButton.addEventListener("click", () => feedbackDialog.close());
-feedbackCancelButton.addEventListener("click", () => feedbackDialog.close());
+feedbackCloseButton.addEventListener("click", closeFeedback);
+feedbackCancelButton.addEventListener("click", closeFeedback);
 feedbackForm.addEventListener("submit", submitFeedback);
 feedbackDialog.addEventListener("click", (event) => {
-  if (event.target === feedbackDialog) feedbackDialog.close();
+  if (event.target === feedbackDialog) closeFeedback();
 });
 
 function restoreNavigationState() {
