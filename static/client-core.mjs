@@ -53,6 +53,37 @@ export function codeCandidateIndices(dataset, query) {
   return [...indices].sort((left, right) => left - right);
 }
 
+function normalizedSearchTokens(query) {
+  return normalizeText(query)
+    .toLowerCase()
+    .replace(/[，,]+/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function hierarchySearchText(dataset, index) {
+  const parts = [];
+  let current = index;
+  while (current >= 0) {
+    const row = dataset.rows[current];
+    parts.push(normalizeText(row[ROW_SEARCH_BLOB]).toLowerCase());
+    current = row[ROW_PARENT];
+  }
+  return parts.join(" ");
+}
+
+function hierarchySearchIndices(dataset, query) {
+  const tokens = normalizedSearchTokens(query);
+  if (!tokens.length) return [];
+
+  const matches = [];
+  for (let index = 0; index < dataset.rows.length; index += 1) {
+    const text = hierarchySearchText(dataset, index);
+    if (tokens.every((token) => text.includes(token))) matches.push(index);
+  }
+  return matches;
+}
+
 export function findSearchIndices(dataset, query, mode = "auto") {
   const queryText = normalizeText(query);
   const rows = dataset.rows || [];
@@ -66,7 +97,11 @@ export function findSearchIndices(dataset, query, mode = "auto") {
 
   if (mode === "auto" && /[,，]/u.test(queryText)) {
     const located = locateIndex(dataset, queryText);
-    if (located >= 0) return [located];
+    const pathMatches = hierarchySearchIndices(dataset, queryText);
+    if (located >= 0) {
+      return [located, ...pathMatches.filter((index) => index !== located)];
+    }
+    if (pathMatches.length) return pathMatches;
   }
 
   const candidates =

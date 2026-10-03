@@ -46,16 +46,39 @@ test("multi-part locate resolves fixation device internal to T84.9", () => {
   assert.equal(dataset.rows[index][ROW_CODE], "T84.9");
 });
 
-test("auto search treats a valid comma-separated index path as a hierarchical locate", () => {
+test("auto search prioritizes a valid comma-separated locate and keeps other matching paths", () => {
   const indices = findSearchIndices(dataset, "Complications,fixation device, internal", "auto");
-  assert.equal(indices.length, 1);
+  assert.ok(indices.length >= 1);
   assert.equal(dataset.rows[indices[0]][ROW_ENGLISH], "fixation device, internal (orthopedic)");
   assert.equal(dataset.rows[indices[0]][ROW_CODE], "T84.9");
+
+  const unique = new Set(indices);
+  assert.equal(unique.size, indices.length);
 });
 
 test("auto search falls back to ordinary text search when a comma-separated path is invalid", () => {
   const indices = findSearchIndices(dataset, "definitely-not-a-real-parent, child", "auto");
   assert.deepEqual(indices, []);
+});
+
+test("comma search can match terms distributed across an ancestor path", () => {
+  const indices = findSearchIndices(dataset, "Complications, mechanical", "auto");
+  assert.ok(indices.length > 0);
+  assert.ok(
+    indices.some((index) => {
+      let current = index;
+      let sawComplications = false;
+      let sawMechanical = false;
+      while (current >= 0) {
+        const row = dataset.rows[current];
+        const text = `${row[2]} ${row[3]}`.toLowerCase();
+        if (text.includes("complications") || text.includes("并发症")) sawComplications = true;
+        if (text.includes("mechanical") || text.includes("机械")) sawMechanical = true;
+        current = row[14];
+      }
+      return sawComplications && sawMechanical;
+    }),
+  );
 });
 
 test("multi-part locate resolves parenthesized coronary graft target", () => {
