@@ -7,6 +7,9 @@ import {
   HIERARCHY_MIN_LEVEL,
   ROOT_DIR,
   ROW_PARENT,
+  ROW_IMAGE_PAGE,
+  ROW_LEVEL,
+  ROW_ENGLISH,
   ROW_SUBTREE_END,
   buildDataset,
   canonicalHeader,
@@ -124,4 +127,50 @@ test("source cross-reference targets are not obviously truncated", async () => {
   }
 
   assert.deepEqual(problems, []);
+});
+
+test("pages 282-283 pneumonia in (due to) terms retain correct ancestry", async () => {
+  const inputPath = path.join(ROOT_DIR, "data", "source", "rows-p0251-0300.csv");
+  const { dataset } = await buildDataset([inputPath]);
+  const rows = dataset.rows;
+
+  function find(page, english) {
+    const matches = [];
+    rows.forEach((row, index) => {
+      if (row[ROW_IMAGE_PAGE] === page && row[ROW_ENGLISH] === english) matches.push(index);
+    });
+    assert.equal(matches.length, 1, `Expected one entry for ${page}: ${english}`);
+    return matches[0];
+  }
+
+  const dueTo = find(282, "in (due to)");
+  const nextMainTerm = find(283, "plasma cell (of infants)");
+  assert.equal(rows[dueTo][ROW_LEVEL], 3);
+
+  for (let index = dueTo + 1; index < nextMainTerm; index += 1) {
+    assert.ok(rows[index][ROW_LEVEL] >= 4, `Broken nesting: ${rows[index][ROW_ENGLISH]}`);
+    let parent = rows[index][ROW_PARENT];
+    while (parent !== dueTo && parent >= 0) parent = rows[parent][ROW_PARENT];
+    assert.equal(parent, dueTo, `Outside in (due to) branch: ${rows[index][ROW_ENGLISH]}`);
+  }
+
+  for (const [page, english] of [
+    [282, "respiratory syncytial virus"],
+    [282, "ascariasis"],
+    [282, "Pseudomonas NEC"],
+    [282, "cytomegalovirus disease"],
+    [282, "Escherichia coli (E. coli)"],
+    [282, "Klebsiella (pneumoniae)"],
+    [283, "Salmonella (infection)"],
+    [283, "Serratia marcescens"],
+    [283, "psittacosis"],
+  ]) {
+    assert.equal(rows[find(page, english)][ROW_PARENT], dueTo, english);
+  }
+
+  assert.equal(rows[find(282, "pseudomallei")][ROW_PARENT], find(282, "Pseudomonas NEC"));
+  assert.equal(rows[find(282, "group B")][ROW_PARENT], find(282, "Streptococcus"));
+  assert.equal(rows[find(283, "typhi")][ROW_PARENT], find(283, "Salmonella (infection)"));
+  assert.equal(rows[find(283, "organism NEC")][ROW_PARENT], find(283, "specified"));
+  assert.equal(rows[find(283, "bacterium NEC")][ROW_PARENT], find(283, "specified"));
 });
