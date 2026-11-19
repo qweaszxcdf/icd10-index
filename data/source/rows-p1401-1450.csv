@@ -655,7 +655,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1419,5,葡萄球菌,Staphylococcus,A05.0,0.9699183106422424,,,,,
 1419,5,沙门菌,salmonella,A02.9,0.9574565887451172,,,,,
 1419,6,伴有,with,,0.8242897987365723,,,,,
-1419,3,败血症,septicemia,A02.1,0.9549509286880493,,,,,
+1419,7,败血症,septicemia,A02.1,0.9549509286880493,,,,,
 1419,7,局部感染,localized infection(s),A02.2,0.9906395673751831,,,,,
 1419,7,特指的临床表现NEC,specified manifestation NEC,A02.8,0.9413424134254456,,,,,
 1419,7,胃肠炎,(gastro)enteritis,A02.0,0.9892237186431885,,,,,
