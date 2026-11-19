@@ -140,6 +140,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 54,3,眼，眼部皮肤,"ocular, oculocutaneous",E70.3,0.982803463935852,,,,,
 54,2,白甲(点状)(纹状),"Leukonychia, Leukopathia unguium (punctata) (striata)",L60.8,0.9887733459472656,,,,,
 54,3,先天性,congenital,Q84.4,0.9785128235816956,,,,,
+55,2,白内障,Cataract,H26.9,,,,,,
 55,3,板层(绕核),zonular (perinuclear),Q12.0,0.9793872237205505,,,,,
 55,3,并发性,complicated,H26.2,0.9512720108032227,,,,,
 55,3,玻璃工人的,glass-blower's,H26.8,0.9814887642860413,,,,,
