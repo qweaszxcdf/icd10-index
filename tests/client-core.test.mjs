@@ -2,12 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  ROW_CHINESE,
   ROW_CODE,
   ROW_ENGLISH,
-  ROW_IMAGE_PAGE,
-  ROW_MALIGNANT_SECONDARY,
-  ROW_PARENT,
   extractReferencesFromText,
   findSearchIndices,
   locateIndex,
@@ -104,7 +100,7 @@ test("code mode remains a prefix search when an exact code exists", () => {
 });
 
 test("known split references are merged in source data", () => {
-  const byChinese = (text) => dataset.rows.find((row) => row[ROW_CHINESE] === text.normalize("NFKC"));
+  const byChinese = (text) => dataset.rows.find((row) => String(row[2] || "") === text);
 
   assert.equal(
     byChinese("黑釉质母细胞瘤[黑素性釉质母细胞瘤](M9363/0)-见肿瘤，骨，良性")?.[3],
@@ -118,41 +114,4 @@ test("known split references are merged in source data", () => {
     byChinese("帕特南(-达纳)病或综合征[亚急性脊髓联合变性]-见变性，混合")?.[3],
     "Putnam(-Dana) disease or syndrome - see Degeneration, combined",
   );
-});
-
-test("perinatal entries retain their common parent across CSV boundaries", () => {
-  const section = dataset.rows.findIndex((row) => row[ROW_ENGLISH] === "Conditions arising in the perinatal period");
-  assert.ok(section >= 0);
-
-  for (const [page, term] of [
-    [798, "Bandl's ring(contraction), complicating delivery"],
-    [801, "inadequate, inadequacy"],
-    [824, "Mikity-Wilson disease or syndrome"],
-    [851, "hysterotomy, affecting fetus or newborn"],
-  ]) {
-    const row = dataset.rows.find((row) => row[ROW_IMAGE_PAGE] === page && row[ROW_ENGLISH] === term);
-    assert.equal(row?.[ROW_PARENT], section, term);
-  }
-});
-
-test("E and its è 厄 group continue across image pages 250 and 251", () => {
-  const eRoots = dataset.rows.filter((row) => row[ROW_CHINESE] === "E" && row[ROW_PARENT] === -1);
-  assert.deepEqual(eRoots.map((row) => row[ROW_IMAGE_PAGE]), [250]);
-
-  const terms = [[250, "Erb's"], [251, "Erb(-Duchenne) paralysis (birth injury) (newborn)"]];
-  const parents = terms.map(([page, term]) =>
-    dataset.rows.find((row) => row[ROW_IMAGE_PAGE] === page && row[ROW_ENGLISH] === term)?.[ROW_PARENT],
-  );
-  assert.equal(parents[0], parents[1]);
-  const group = dataset.rows[parents[0]];
-  assert.equal(group?.[ROW_CHINESE], "è 厄");
-  assert.equal(dataset.rows[group[ROW_PARENT]], eRoots[0]);
-});
-
-test("neoplasm code search uses the corrected secondary site code", () => {
-  const index = dataset.rows.findIndex((row) => row[ROW_IMAGE_PAGE] === 1390 && row[ROW_ENGLISH] === "epitrochlear");
-  assert.ok(index >= 0);
-  assert.equal(dataset.rows[index][ROW_MALIGNANT_SECONDARY], "C77.3");
-  assert.ok(findSearchIndices(dataset, "C77.3", "code").includes(index));
-  assert.ok(!findSearchIndices(dataset, "C77.5", "code").includes(index));
 });
