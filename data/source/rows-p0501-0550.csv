@@ -466,7 +466,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 512,4,作为妇科常规检查的一部分,aspart of routine gynecological examination,Z01.4,0.9726666808128357,,,,,
 512,3,供者(可能的),donor (potential),Z00.5,0.9710269570350647,,,,,
 513,3,后,following,,0.9642380475997925,,,,,
-513,4,机动车意外事故,motor vehicle accident .,Z04,0.9756183624267578,,,,,
+513,4,机动车意外事故,motor vehicle accident .,Z04.1,0.9756183624267578,,,,,
 513,4,意外事故NEC,accident NEC,Z04.3,0.9903594255447388,,,,,
 513,5,工作,work,Z04.2,0.8851193785667419,,,,,
 513,5,交通,transport,Z04.1,0.9206672310829163,,,,,

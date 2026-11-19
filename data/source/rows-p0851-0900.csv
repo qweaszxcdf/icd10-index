@@ -1681,7 +1681,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 894,5,单侧,unilateral,Q60.0,0.9650217294692993,,,,,
 894,5,双侧,bilateral,Q60.1,0.9660184979438782,,,,,
 894,3,生殖器官,genital organs,,0.9966336488723755,,,,,
-894,4,后天性(女性)(男性),acquired (female) (male) .,Z90,0.9711312055587769,,,,,
+894,4,后天性(女性)(男性),acquired (female) (male) .,Z90.7,0.9711312055587769,,,,,
 894,4,男性，先天性,"male, congenital",Q55.8,0.9903068542480469,,,,,
 894,4,女性，先天性,"female, congenital",Q52.8,0.9846947193145752,,,,,
 894,5,内NEC,internal NEC,Q52.8,0.968629002571106,,,,,

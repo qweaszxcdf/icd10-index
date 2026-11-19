@@ -419,7 +419,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 762,3,嗜中性，热性,"neutrophilic, febrile",L98.2,0.9890039563179016,,,,,
 762,3,小脓疱性，角质层下,"pustular, subcorneal",L13.1,0.9939923882484436,,,,,
 763,3,心因性,psychogenic,F54,0.9634077548980713,,,,,
-763,3,眼睑(非传染性).,eyelid (noninfectious),H01,0.9729008674621582,,,,,
+763,3,眼睑(非传染性).,eyelid (noninfectious),H01.1,0.9729008674621582,,,,,
 763,3,月经 NEC,menstrual NEC,L98.8,0.9486913084983826,,,,,
 763,3,职业性(另见皮炎，由于),"occupational (see also Dermatitis, due to)",L25.9,0.953770637512207,,,,,
 763,3,着色紫癜性,"purpuric, pigmented",L81.7,0.9883004426956177,,,,,
