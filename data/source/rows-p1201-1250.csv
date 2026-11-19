@@ -712,7 +712,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1220,2,血红蛋白病(混合性) NEC,Hemoglobinopathy (mixed) NEC,D58.2,0.9742271304130554,,,,,
 1220,3,伴有地中海贫血,with thalassemia,D56.9,0.9945036768913269,,,,,
 1220,3,镰状细胞,sickle-cell,D57.1,0.9742768406867981,,,,,
-1220,4,伴有地中海贫血,with thalassemia,D56.8,0.9669053554534912,,,,,
+1220,4,伴有地中海贫血,with thalassemia,D57.2,0.9669053554534912,,,,,
 1220,2,血红蛋白尿,Hemoglobinuria,R82.3,0.9781683087348938,,,,,
 1220,3,伴有贫血，溶血性，后天性(慢性)NEC,"with anemia, hemolytic, acquired (chronic) NEC",D59.6,0.9854087829589844,,,,,
 1220,3,间歇性,intermittent,D59.6,0.9924012422561646,,,,,
