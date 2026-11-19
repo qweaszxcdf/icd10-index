@@ -609,6 +609,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 266,2,反验(前)(后),Crossbite (anterior) (posterior),K07.2,0.9400144815444946,,,,,
 266,2,反甲[匙状甲],Koilonychia,L60.3,0.9999033808708191,,,,,
 266,3,先天性,congenital,Q84.6,0.9547500610351562,,,,,
+267,2,反流,"Reflux, Regurgitation",,,,,,,
 267,3,二尖瓣-见关闭不全，二尖瓣,"mitral (valve) - see Insufficiency, mitral",,0.9930705428123474,,,,,
 267,4,先天性,congenital,Q23.3,0.9673378467559814,,,,,
 267,3,三尖瓣(另见关闭不全，三尖瓣),"tricuspid (see also Insufficiency, tricuspid)",I07.1,0.9874525666236877,,,,,
