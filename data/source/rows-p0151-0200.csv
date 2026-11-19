@@ -819,7 +819,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 173,1,chǐ 齿,,,0.9999023675918579,,,,,
 173,2,齿突、齿中齿或牙套叠,"Dens evaginatus, in dente or invaginatus",K00.2,0.972388744354248,,,,,
 173,2,齿音发音不清,Lisping,F80.8,0.9908654689788818,,,,,
-173,2,齿龈溃疡,Gumboil,K04.6,0.9990941286087036,,,,,
+173,2,齿龈溃疡,Gumboil,K04.7,0.9990941286087036,,,,,
 173,1,chōng 冲,,,0.9998459815979004,,,,,
 173,2,冲动发放,Discharge,,0.9999309778213501,,,,,
 173,3,特发性间脑自主,diencephalic autonomic idiopathic,G40.5,0.9976078271865845,,,,,

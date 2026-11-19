@@ -1798,7 +1798,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1449,3,血管痉挛(创伤性),vasospastic (traumatic),T75.2,0.9923802018165588,,,,,
 1449,3,血管迷走神经,vasovagal,R55,0.9943702816963196,,,,,
 1449,3,血管运动,vasomotor,I73.9,0.9728611707687378,,,,,
-1449,2,血小板减少-桡骨缺失 TAR,TAR (thrombocytopenia with absent radius),Q87.2,0.9667561054229736,,,,,
+1449,3,血小板减少-桡骨缺失 TAR,TAR (thrombocytopenia with absent radius),Q87.2,0.9667561054229736,,,,,
 1449,3,压迫,compression,T79.5,0.9893301725387573,,,,,
 1449,4,腹腔动脉,celiac artery,I77.4,0.986173152923584,,,,,
 1449,4,脊髓前动脉和椎动脉,anterior spinal and vertebral artery,M47.0+ G99.2*,0.9827155470848083,,,,,

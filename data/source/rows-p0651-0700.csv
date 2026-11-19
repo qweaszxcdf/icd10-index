@@ -1223,7 +1223,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 683,3,溃疡(慢性潜行性),ulcer (chronic undermining),L98.4,0.9741077423095703,,,,,
 683,2,梅内特里耶病或综合征,Ménétrier's disease or syndrome,K29.6,0.9942495822906494,,,,,
 683,2,梅尼埃病[美尼尔病]、梅尼埃综合征或梅尼埃眩晕,"Ménière's disease, syndrome or vertigo",H81.0,0.9728074073791504,,,,,
-683,2,梅热综合征,Meige's syndrome,Q82.0,0.9999144673347473,,,,,
+683,2,梅热综合征,Meige's syndrome,G24.4,0.9999144673347473,,,,,
 683,2,梅耶尔-施维克拉特和魏尔综合征,Meyer-Schwickerath and Weyer's syndrome,Q87.0,0.9999533891677856,,,,,
 683,1,méi 煤,,,0.9685965776443481,,,,,
 683,2,煤炭工肺或煤炭工肺尘埃沉着病,Coalworker's lung or pneumoconiosis,J60,0.9889029264450073,,,,,

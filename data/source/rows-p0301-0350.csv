@@ -1061,7 +1061,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 328,3,巨细胞病毒性,cytomegaloviral,B25.1+ K77.0*,0.9864684343338013,,,,,
 328,3,卡他性(急性),catarrhal (acute),B15.9,0.9786164164543152,,,,,
 328,4,伴有肝昏迷,with hepatic coma,B15.0,0.9627341628074646,,,,,
-328,3,狼疮样 NEC,lupoid NEC,K73.2,0.9475025534629822,,,,,
+328,3,狼疮样 NEC,lupoid NEC,K75.4,0.9475025534629822,,,,,
 328,3,流行性,epidemic,B15.9,0.9464411735534668,,,,,
 328,4,伴有肝昏迷,with hepatic coma,B15.0,0.9735555648803711,,,,,
 328,3,梅毒性(晚期),syphilitic (late),A52.7+ K77.0*,0.965018630027771,,,,,
