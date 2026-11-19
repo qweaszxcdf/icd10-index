@@ -1440,7 +1440,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1239,2,牙痛，牙疼,"Odontalgia, Toothache",K08.8,0.9995951652526855,,,,,
 1239,2,牙龈的 - 见情况,Gum - see condition,,0.9762051105499268,,,,,
 1239,2,牙龈瘤(纤维性)(巨细胞)(牙龈),Epulis (fibrous) (giant cell) (gingiva),K06.8,0.9963330030441284,,,,,
-1239,2,牙龈脓肿,Parulis,K04.6,0.9872322082519531,,,,,
+1239,2,牙龈脓肿,Parulis,K04.7,0.9872322082519531,,,,,
 1239,2,牙拥挤,"Crowding, tooth, teeth",K07.3,0.9873880743980408,,,,,
 1239,2,牙折断,Odontoclasia,K02.4,0.9489943385124207,,,,,
 1239,2,牙周变性(幼年型),"Parodontosis, Periodontosis (juvenile)",K05.4,0.9948962926864624,,,,,
