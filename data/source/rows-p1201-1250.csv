@@ -1061,7 +1061,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1229,3,体质性,constitutional,D68.0,0.9611650705337524,,,,,
 1229,3,维勒布兰德-尤尔根斯,Willebrand-Jurgens,D68.0,0.9947620034217834,,,,,
 1229,2,血小板无力症(格兰茨曼),Thrombocytasthenia (Glanzmann),D69.1,0.9998565912246704,,,,,
-1229,2,血小板增多，特发性,"Thrombocytosis, essential",D75.2,0.9715784192085266,,,,,
+1229,2,血小板增多，特发性,"Thrombocytosis, essential",D47.3,0.9715784192085266,,,,,
 1229,3,出血性，原发性(M9962/1),"hemorrhagic, primary (M9962/1)",D47.3,0.9951707720756531,,,,,
 1229,2,血性精液,Hematospermia,N50.1,0.9999518394470215,,,,,
 1229,2,血性乳糜尿，在血吸虫病(裂体吸虫病)中,"Hematochyluria, in schistosomiasis (bilharziasis)",B65.0,0.9996285438537598,,,,,

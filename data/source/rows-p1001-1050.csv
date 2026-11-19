@@ -181,7 +181,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1005,4,并发于分娩,complicating delivery,O66.9,0.9494495987892151,,,,,
 1005,1,shòu 授,,,0.9997785687446594,,,,,
 1005,2,授精，人工,"Insemination, artificial",Z31.1,0.9988370537757874,,,,,
-1005,2,授精(又称受精)(辅助) NEC,Fertilization (assisted) NEC .,Z31,0.9756530523300171,,,,,
+1005,2,授精(又称受精)(辅助) NEC,Fertilization (assisted) NEC .,Z31.3,0.9756530523300171,,,,,
 1005,3,体外,in vitro,Z31.2,0.9439042210578918,,,,,
 1006,1,shòu 兽,,,0.9285251498222351,,,,,
 1006,2,兽奸,Bestiality,F65.8,0.9966516494750977,,,,,
