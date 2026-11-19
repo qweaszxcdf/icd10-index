@@ -135,6 +135,20 @@ test("perinatal entries retain their common parent across CSV boundaries", () =>
   }
 });
 
+test("E and its è 厄 group continue across image pages 250 and 251", () => {
+  const eRoots = dataset.rows.filter((row) => row[ROW_CHINESE] === "E" && row[ROW_PARENT] === -1);
+  assert.deepEqual(eRoots.map((row) => row[ROW_IMAGE_PAGE]), [250]);
+
+  const terms = [[250, "Erb's"], [251, "Erb(-Duchenne) paralysis (birth injury) (newborn)"]];
+  const parents = terms.map(([page, term]) =>
+    dataset.rows.find((row) => row[ROW_IMAGE_PAGE] === page && row[ROW_ENGLISH] === term)?.[ROW_PARENT],
+  );
+  assert.equal(parents[0], parents[1]);
+  const group = dataset.rows[parents[0]];
+  assert.equal(group?.[ROW_CHINESE], "è 厄");
+  assert.equal(dataset.rows[group[ROW_PARENT]], eRoots[0]);
+});
+
 test("neoplasm code search uses the corrected secondary site code", () => {
   const index = dataset.rows.findIndex((row) => row[ROW_IMAGE_PAGE] === 1390 && row[ROW_ENGLISH] === "epitrochlear");
   assert.ok(index >= 0);

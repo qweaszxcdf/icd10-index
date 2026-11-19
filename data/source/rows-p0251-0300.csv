@@ -1,6 +1,4 @@
 image_page,level,chinese,english,code,confidence,malignant_primary,malignant_secondary,in_situ,benign,uncertain_or_unspecified
-251,0,E,,,,,,,,
-251,1,è 厄,,,0.9619320034980774,,,,,
 251,2,厄尔布麻痹[厄尔布(-迪谢内)麻痹](产伤)(新生儿),Erb(-Duchenne) paralysis (birth injury) (newborn),P14.0,0.9988069534301758,,,,,
 251,2,厄舍-塞尼尔病或厄舍-塞尼尔综合征[红斑性天疱疮],Usher-Senear disease or syndrome,L10.4,0.9405367970466614,,,,,
 251,1,è 恶,,,0.9999182224273682,,,,,
