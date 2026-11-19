@@ -710,7 +710,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1019,4,非生脓性,nonpyogenic,G95.1,0.981109082698822,,,,,
 1019,2,栓子-见栓塞,Embolus – see Embolism,,0.9886331558227539,,,,,
 1019,2,栓子的 - 见情况,Embolic – see condition,,0.9120981693267822,,,,,
-1020,2,,Double,,,,,,,
+1020,2,双,Double,,,,,,,
 1020,3,出口,outlet,,0.9997751116752625,,,,,
 1020,4,右心室,right ventricle,Q20.1,0.9635934829711914,,,,,
 1020,4,左心室,left ventricle,Q20.2,0.9594243764877319,,,,,
