@@ -230,6 +230,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 356,2,高原，高(效应)-见效应，有害，高海拔,"Altitude, high (effects) - see Effect, adverse, high altitude",,0.9986445903778076,,,,,
 356,2,高脂沉积症,Hyperlipidosis,E75.6,0.9984890222549438,,,,,
 356,3,遗传性NEC,hereditary NEC,E75.5,0.9663828611373901,,,,,
+357,2,高脂蛋白血症,Hyperlipoproteinemia,E78.5,,,,,,
 357,3,低密度脂蛋白型,low-density-lipoprotein-type (LDL),E78.0,0.9937122464179993,,,,,
 357,3,极低密度脂蛋白型.,very-low-density-lipoprotein-type (VLDL),E78.1,0.9916694164276123,,,,,
 357,3,弗雷德里克森,Fredrickson's type,,0.9770814776420593,,,,,
