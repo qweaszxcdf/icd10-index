@@ -239,6 +239,32 @@ function chineseMarkerAllowed(text, index, marker) {
   return /[\s\-—–(（；;，,:：]/u.test(text[index - 1]);
 }
 
+function normalizeNeoplasmReference(display) {
+  const heading = /^(?:neoplasms?|肿瘤表?)(?=$|[\s,.，、])/iu.exec(display);
+  if (!heading) return display;
+
+  // Behavior qualifiers live in code columns. Keep any anatomical qualifiers.
+  const behavior = /(?:malignant(?:\s*\((?:primary|secondary)\)|\s+(?:primary|secondary))?|benign|secondary|in\s+situ|(?:uncertain(?:\s+or\s+unknown)?|unspecified)(?:\s+behaviou?r)?|恶性(?:\s*[（(](?:原发性?|继发性?)[）)])?|恶|良性|继发性|原位(?:癌)?|动态未定(?:或未知)?|性质未定|性质不明|未特指)(?:\s*\(M\d{4}\/\d\))?$/iu;
+  let removedBehavior = false;
+  const sites = display.slice(heading[0].length).replace(/^\s*\.\s*/u, "")
+    .split(/[,，、]/u)
+    .map((part) => {
+      const term = part.trim();
+      const qualifier = behavior.exec(term);
+      if (!qualifier) return term;
+      const site = term.slice(0, qualifier.index);
+      // An English qualifier must be a separate word.
+      if (/[a-z]$/iu.test(site) && /^[a-z]/iu.test(qualifier[0])) return term;
+      removedBehavior = true;
+      return site.trim();
+    })
+    .filter(Boolean);
+
+  if (!removedBehavior) return display;
+  const anatomicalSites = sites.filter((site) => !/^(?:by site|按部位)$/iu.test(site));
+  return [heading[0].replace(/^肿瘤表$/u, "肿瘤"), ...anatomicalSites].join(", ");
+}
+
 export function extractReferencesFromText(value, language) {
   const text = String(value ?? "");
   const refs = [];
@@ -258,10 +284,7 @@ export function extractReferencesFromText(value, language) {
     if (range.end <= range.start) continue;
 
     const display = text.slice(range.start, range.end);
-    // Neoplasm behaviors are code columns, not child entries in the index.
-    const target = /^(?:neoplasms?|肿瘤)(?=\s*[,，、]|\s*$)/iu.test(display)
-      ? display.replace(/\s*[,，、]\s*(?:malignant(?:\s*\([^)]*\)|\s+(?:primary|secondary))?|benign|secondary|in\s+situ|uncertain(?:\s+behaviou?r)?|unspecified(?:\s+behaviou?r)?|恶性(?:[（(](?:原发性?|继发性?)[）)])?|良性|继发性|原位(?:癌)?|动态未定|性质未定|性质不明|未特指)\s*$/iu, "")
-      : display;
+    const target = normalizeNeoplasmReference(display);
     refs.push({ target, display, start: range.start, end: range.end, language });
   }
   return refs;
