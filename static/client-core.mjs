@@ -260,7 +260,7 @@ export function extractReferencesFromText(value, language) {
     const display = text.slice(range.start, range.end);
     // Neoplasm behaviors are code columns, not child entries in the index.
     const target = /^(?:neoplasms?|肿瘤)(?=\s*[,，、]|\s*$)/iu.test(display)
-      ? display.replace(/\s*[,，、]\s*(?:malignant(?:\s*\([^)]*\)|\s+(?:primary|secondary))?|benign|secondary|in\s+situ|uncertain(?:\s+behaviou?r)?|unspecified(?:\s+behaviou?r)?|恶性(?:[（(](?:原发性?|继发性?)[）)])?|良性|继发性|原位(?:癌)?|性质未定|性质不明|未特指)\s*$/iu, "")
+      ? display.replace(/\s*[,，、]\s*(?:malignant(?:\s*\([^)]*\)|\s+(?:primary|secondary))?|benign|secondary|in\s+situ|uncertain(?:\s+behaviou?r)?|unspecified(?:\s+behaviou?r)?|恶性(?:[（(](?:原发性?|继发性?)[）)])?|良性|继发性|原位(?:癌)?|动态未定|性质未定|性质不明|未特指)\s*$/iu, "")
       : display;
     refs.push({ target, display, start: range.start, end: range.end, language });
   }
