@@ -1326,7 +1326,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 636,5,恶性(M9250/3)-见肿瘤，骨，恶性,"malignant (M9250/3) - see Neoplasm, bone, malignant",,0.9874355792999268,,,,,
 636,4,软骨瘤(M9230/0)-见肿瘤，骨，良性,"chondromatous (M9230/0) - see Neoplasm, bone, benign",,0.9741337299346924,,,,,
 636,4,软组织(M9251/1)-见肿瘤，结缔组织，动态未定,"soft parts (M9251/1) - see Neoplasm, connective tissue, uncertain behavior",,0.9846024513244629,,,,,
-636,5,恶性(M9251/3)-见肿瘤，结缔组织恶性,"malignant (M9251/3) - see Neoplasm, connective tissue,malignant",,0.9768735766410828,,,,,
+636,5,恶性(M9251/3)-见肿瘤，结缔组织，恶性,"malignant (M9251/3) - see Neoplasm, connective tissue,malignant",,0.9768735766410828,,,,,
 636,3,颗粒细胞(M9580/0)- 另见 肿瘤，结缔组织，良性,"granular cell (M9580/0) - see also Neoplasm, connective tissue, benign",,0.9610438346862793,,,,,
 636,4,恶性(M9580/3)-见肿瘤，结缔组织，恶性,"malignant (M9580/3) - see Neoplasm, connective tissue, malignant",,0.9831917881965637,,,,,
 636,3,科德曼(M9230/0)-见肿瘤，骨，良性,"Codman's (M9230/0) - see Neoplasm, bone, benign",,0.995051383972168,,,,,

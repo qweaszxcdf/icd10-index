@@ -744,7 +744,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 671,3,由于细胞毒素药物NEC,due to cytotoxic drugs NEC,L65.8,0.9792725443840027,,,,,
 671,2,毛根鞘瘤(M8102/0)-见肿瘤，皮肤，良性,"Tricholemmoma (M8102/0) - see Neoplasm, skin, benign",,0.9888589382171631,,,,,
 671,2,毛基质瘤(M8110/0)-见肿瘤，皮肤，良性,"Pilomatrixoma (M8110/0) - see Neoplasm, skin, benign",,0.9850684404373169,,,,,
-671,3,恶性(M8110/3)-见肿瘤，皮肤，恶性,"malignant (M8110/3) - see Neoplasm, skin malignant",,0.9739289879798889,,,,,
+671,3,恶性(M8110/3)-见肿瘤，皮肤，恶性,"malignant (M8110/3) - see Neoplasm, skin, malignant",,0.9739289879798889,,,,,
 671,2,毛霉病,Mucormycosis,B46.5,0.9999259114265442,,,,,
 671,3,鼻大脑,rhinocerebral,B46.1+ G99.8*,0.9811670184135437,,,,,
 671,3,播散性,disseminated,B46.4,0.9764288067817688,,,,,
