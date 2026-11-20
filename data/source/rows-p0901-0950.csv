@@ -1154,7 +1154,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 930,4,峡,isthmus,C54.0,0.972510576248169,,,,,
 931,2,肉瘤病,Sarcomatosis,,0.9999499320983887,,,,,
 931,3,脑(脊)膜(M9539/3)-见肿瘤，脑脊膜，恶性,"meningeal (M9539/3) - see Neoplasm, meninges, malignant",,0.9799969792366028,,,,,
-931,3,特指部位 NEC(M8800/3)-见 肿瘤，结缔组织，恶性,"specified site NEC (M8800/3) - see Neoplasm connective tissue, malignant",,0.9716542959213257,,,,,
+931,3,特指部位 NEC(M8800/3)-见 肿瘤，结缔组织，恶性,"specified site NEC (M8800/3) - see Neoplasm, connective tissue, malignant",,0.9716542959213257,,,,,
 931,3,未特指部位(M8800/6),unspecified site (M8800/6),C80,0.9901906251907349,,,,,
 931,2,肉胎块,Fleshy mole,O02.0,0.9717254042625427,,,,,
 931,2,肉芽肿,"Granuloma, Mycosis",L92.9,0.9978313446044922,,,,,

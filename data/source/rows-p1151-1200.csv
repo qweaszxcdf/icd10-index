@@ -796,7 +796,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1171,2,纤维增生,Fibroplasia,,0.9998453259468079,,,,,
 1171,3,晶状体后[早产儿视网膜病变综合征],retrolental,H35.1,0.9823119640350342,,,,,
 1171,2,纤维织炎(关节周)(类风湿),Fibrositis (periarticular) (rheumatoid),M79.7,0.9973061084747314,,,,,
-1171,2,纤维脂肪肉瘤(M8850/3)-见肿瘤，结缔组织恶性,"Fibroliposarcoma (M8850/3) - see Neoplasm, connective tissue, malignant",,0.9763636589050293,,,,,
+1171,2,纤维脂肪肉瘤(M8850/3)-见肿瘤，结缔组织，恶性,"Fibroliposarcoma (M8850/3) - see Neoplasm, connective tissue, malignant",,0.9763636589050293,,,,,
 1171,2,纤维脂瘤(M8851/0)-见脂肪瘤,Fibrolipoma (M8851/0) - see Lipoma,,0.996111273765564,,,,,
 1171,1,xián 涎,,,0.9794806838035583,,,,,
 1171,2,涎管或涎腺的-见情况,Salivary duct or gland - see condition,,0.9955013990402222,,,,,

@@ -312,7 +312,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 43,4,合并绒毛膜癌(M9101/3),combined with choriocarcinoma (M9101/3),,0.9758846163749695,,,,,
 43,4,婴儿型(M9071/3),infantile type (M9071/3),,0.9865986704826355,,,,,
 43,3,皮肤附属物(M8390/3)-见肿瘤，皮肤，恶性,"skin appendage (M8390/3) - see Neoplasm, skin, malignant",,0.9807578325271606,,,,,
-43,3,皮脂腺(M8410/3)-见肿瘤，皮肤，恶性,"sebaceous (M8410/3) - see Neoplasm, skin malignant",,0.985479474067688,,,,,
+43,3,皮脂腺(M8410/3)-见肿瘤，皮肤，恶性,"sebaceous (M8410/3) - see Neoplasm, skin, malignant",,0.985479474067688,,,,,
 43,3,球状细胞(M8010/3),spheroidal cell (M8010/3),,0.9851360321044922,,,,,
 43,3,绒毛膜(M9100/3),chorionic (M9100/3),,0.9665650129318237,,,,,
 43,4,特指部位-见肿瘤，恶性,"specified site - see Neoplasm, malignant",,0.9736460447311401,,,,,

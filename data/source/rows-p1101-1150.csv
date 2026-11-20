@@ -477,7 +477,7 @@ image_page,level,chinese,english,code,confidence,malignant_primary,malignant_sec
 1113,2,外渗-见漏出,Extravasation - see Extravasation,,0.989340603351593,,,,,
 1113,2,外生骨疣,Exostosis,M89.9,0.9999077916145325,,,,,
 1113,3,多发性，先天性,"multiple, congenital",Q78.6,0.967110276222229,,,,,
-1113,3,骨软骨(M9210/0)-见肿瘤，骨，良性,"osteocartilaginous (M9210/0) - see Neoplasm, bone benign",,0.9812533855438232,,,,,
+1113,3,骨软骨(M9210/0)-见肿瘤，骨，良性,"osteocartilaginous (M9210/0) - see Neoplasm, bone, benign",,0.9812533855438232,,,,,
 1113,3,颌(骨),jaw (bone),K10.8,0.9681246280670166,,,,,
 1113,3,眶,orbit,H05.3,0.9371830224990845,,,,,
 1113,3,淋球菌性,gonococcal,A54.4+ M90.2*,0.9712650775909424,,,,,
