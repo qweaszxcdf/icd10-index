@@ -15,6 +15,7 @@ import {
   ROW_SUBTREE_END,
   extractReferencesFromText,
   findSearchIndices,
+  rankSearchMatches,
   locateIndex,
   normalizeText,
 } from "./client-core.mjs";
@@ -184,18 +185,33 @@ function clientCollectRelevantRows(dataset, indices) {
     .map((index) => clientRowToJson(dataset, index, matched.has(index)));
 }
 
+function sortSearchBranches(nodes, matchOrder) {
+  const branchRanks = new Map();
+  for (const node of nodes) {
+    branchRanks.set(node, Math.min(
+      matchOrder.get(node.index) ?? Infinity,
+      sortSearchBranches(node.children, matchOrder),
+    ));
+  }
+  nodes.sort((a, b) => branchRanks.get(a) - branchRanks.get(b));
+  return nodes.length ? branchRanks.get(nodes[0]) : Infinity;
+}
+
 function clientSearch(dataset, query, mode) {
   const matches = findSearchIndices(dataset, query, mode);
-  const shown = matches.slice(0, RESULT_LIMIT);
+  const ranked = query ? rankSearchMatches(dataset, matches, query, mode) : matches;
+  const shown = ranked.slice(0, RESULT_LIMIT);
   const rows = query
     ? clientCollectRelevantRows(dataset, shown)
     : shown.map((index) => clientRowToJson(dataset, index));
+  const tree = clientBuildHierarchy(rows);
+  if (query) sortSearchBranches(tree, new Map(shown.map((index, rank) => [index, rank])));
   return {
     count: matches.length,
     shown: shown.length,
     limited: matches.length > shown.length,
     match_indices: matches,
-    tree: clientBuildHierarchy(rows),
+    tree,
   };
 }
 
@@ -451,27 +467,21 @@ function renderNode(node, asPath = false) {
   heading.appendChild(title);
   label.appendChild(heading);
 
-  const actions = document.createElement("div");
-  actions.className = "node-actions";
-  const meta = document.createElement("div");
+  const meta = document.createElement("button");
+  meta.type = "button";
   meta.className = "node-meta";
-  const metaParts = [`层级 ${node.level}`, `页${node.image_page - INDEX_PDF_PAGE_OFFSET}`];
-  if (typeof node.confidence === "number") metaParts.push(`置信度 ${node.confidence.toFixed(4)}`);
-  meta.textContent = metaParts.join(" · ");
-  actions.appendChild(meta);
-
-  const feedbackButton = document.createElement("button");
-  feedbackButton.type = "button";
-  feedbackButton.className = "node-feedback";
-  feedbackButton.textContent = "反馈";
-  feedbackButton.title = "反馈此词条的数据问题";
-  feedbackButton.addEventListener("click", (event) => {
-    event.preventDefault();
+  const levelLabel = document.createElement("span");
+  levelLabel.textContent = `层级 ${node.level}`;
+  const pageLabel = document.createElement("span");
+  pageLabel.textContent = `页${node.image_page - INDEX_PDF_PAGE_OFFSET}`;
+  meta.append(levelLabel, pageLabel);
+  meta.title = "反馈此词条";
+  meta.setAttribute("aria-label", `${levelLabel.textContent}，${pageLabel.textContent}，反馈此词条`);
+  meta.addEventListener("click", (event) => {
     event.stopPropagation();
     openFeedback(node);
   });
-  actions.appendChild(feedbackButton);
-  label.appendChild(actions);
+  label.appendChild(meta);
   wrapper.appendChild(label);
 
   const neoplasm = renderNeoplasmCodes(node);
