@@ -100,6 +100,23 @@ export function findSearchIndices(dataset, query, mode = "auto") {
   return candidates.filter((index) => rowMatchesSearch(rows[index], queryText, mode));
 }
 
+export function rankSearchMatches(dataset, matches, query, mode) {
+  const codeSearch = mode === "code" || (mode === "auto" && looksLikeIcdQuery(query));
+  const target = codeSearch ? normalizeCode(query) : normalizeLocatePhrase(query);
+  const ranked = matches.map((index) => {
+    const row = dataset.rows[index];
+    const values = codeSearch
+      ? String(row[ROW_NORMALIZED_CODES] || "").split(/\s+/u)
+      : [row[ROW_CHINESE], row[ROW_ENGLISH]].map(normalizeLocatePhrase);
+    const score = values.includes(target) ? 3
+      : values.some((value) => value.startsWith(target)) ? 2
+      : values.some((value) => value.includes(target)) ? 1 : 0;
+    return { index, level: row[ROW_LEVEL], score };
+  });
+  ranked.sort((a, b) => a.level - b.level || b.score - a.score || a.index - b.index);
+  return ranked.map(({ index }) => index);
+}
+
 function locateExactMatch(row, target) {
   const lower = normalizeText(target).toLowerCase();
   return [row[ROW_ENGLISH], row[ROW_CHINESE]]
