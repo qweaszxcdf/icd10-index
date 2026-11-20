@@ -427,6 +427,8 @@ async function submitFeedback(event) {
   }
 }
 
+const INDEX_PDF_PAGE_OFFSET = 8;
+
 function renderNode(node, asPath = false) {
   const wrapper = document.createElement("div");
   wrapper.className = `tree-node${node.matched ? " matched-node" : ""}`;
@@ -453,7 +455,7 @@ function renderNode(node, asPath = false) {
   actions.className = "node-actions";
   const meta = document.createElement("div");
   meta.className = "node-meta";
-  const metaParts = [`层级 ${node.level}`, `页 ${node.image_page}`];
+  const metaParts = [`层级 ${node.level}`, `页${node.image_page - INDEX_PDF_PAGE_OFFSET}`];
   if (typeof node.confidence === "number") metaParts.push(`置信度 ${node.confidence.toFixed(4)}`);
   meta.textContent = metaParts.join(" · ");
   actions.appendChild(meta);
