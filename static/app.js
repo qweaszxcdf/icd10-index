@@ -467,26 +467,21 @@ function renderNode(node, asPath = false) {
   heading.appendChild(title);
   label.appendChild(heading);
 
-  const actions = document.createElement("div");
-  actions.className = "node-actions";
-  const meta = document.createElement("div");
+  const meta = document.createElement("button");
+  meta.type = "button";
   meta.className = "node-meta";
-  const metaParts = [`层级 ${node.level}`, `页${node.image_page - INDEX_PDF_PAGE_OFFSET}`];
-  meta.textContent = metaParts.join(" · ");
-  actions.appendChild(meta);
-
-  const feedbackButton = document.createElement("button");
-  feedbackButton.type = "button";
-  feedbackButton.className = "node-feedback";
-  feedbackButton.textContent = "反馈";
-  feedbackButton.title = "反馈此词条的数据问题";
-  feedbackButton.addEventListener("click", (event) => {
-    event.preventDefault();
+  const levelLabel = document.createElement("span");
+  levelLabel.textContent = `层级 ${node.level}`;
+  const pageLabel = document.createElement("span");
+  pageLabel.textContent = `页${node.image_page - INDEX_PDF_PAGE_OFFSET}`;
+  meta.append(levelLabel, pageLabel);
+  meta.title = "反馈此词条";
+  meta.setAttribute("aria-label", `${levelLabel.textContent}，${pageLabel.textContent}，反馈此词条`);
+  meta.addEventListener("click", (event) => {
     event.stopPropagation();
     openFeedback(node);
   });
-  actions.appendChild(feedbackButton);
-  label.appendChild(actions);
+  label.appendChild(meta);
   wrapper.appendChild(label);
 
   const neoplasm = renderNeoplasmCodes(node);
