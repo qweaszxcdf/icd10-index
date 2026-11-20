@@ -115,7 +115,7 @@ function normalizeLocatePhrase(value) {
     .trim();
 }
 
-function locatePartSpan(row, parts, startIndex) {
+function locatePartSpan(row, parts, startIndex, allowAliases) {
   const values = [row[ROW_ENGLISH], row[ROW_CHINESE]]
     .map(normalizeLocatePhrase)
     .filter(Boolean);
@@ -126,6 +126,12 @@ function locatePartSpan(row, parts, startIndex) {
       if (text.startsWith(target) && " ,-/()—：:".includes(text[target.length] || "")) {
         return span;
       }
+    }
+  }
+  if (allowAliases) {
+    for (const value of values) {
+      const heading = value.split(/[([（【]|\s*[-—–]\s*(?=see\b|另见|参见|见)|\bsee\b|另见|参见|见/u, 1)[0];
+      if (heading.split(",").some((alias) => alias.trim() === parts[startIndex])) return 1;
     }
   }
   return 0;
@@ -140,13 +146,18 @@ export function locateIndex(dataset, target) {
   }
 
   const parts = normalized.split(/[，,]/).map((part) => part.trim()).filter(Boolean);
-  const firstPart = parts[0] || normalized;
+  if (!parts.length) return -1;
+  return locatePath(dataset, parts, false) ?? locatePath(dataset, parts, true) ?? -1;
+}
+
+function locatePath(dataset, parts, allowAliases) {
+  const firstPart = parts[0];
   const candidates = dataset.rows
     .map((row, index) => ({
       index,
       row,
       exact: locateExactMatch(row, firstPart),
-      span: locatePartSpan(row, parts, 0),
+      span: locatePartSpan(row, parts, 0, allowAliases),
     }))
     .filter(({ span }) => span > 0)
     .sort((left, right) =>
@@ -165,7 +176,7 @@ export function locateIndex(dataset, target) {
       for (let index = current + 1; index < end; index += 1) {
         const row = dataset.rows[index];
         if (row[ROW_PARENT] !== current) continue;
-        const span = locatePartSpan(row, parts, partIndex);
+        const span = locatePartSpan(row, parts, partIndex, allowAliases);
         if (span > 0) {
           next = index;
           nextSpan = span;
@@ -191,7 +202,7 @@ export function locateIndex(dataset, target) {
     if (partIndex === parts.length) return current;
   }
 
-  return parts.length <= 1 ? candidates[0]?.index ?? -1 : -1;
+  return parts.length === 1 ? candidates[0]?.index : undefined;
 }
 
 function parenthesisDepthAt(text, end) {
