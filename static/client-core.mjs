@@ -128,6 +128,11 @@ function locatePartSpan(row, parts, startIndex) {
       }
     }
   }
+  // Main index headings may list several synonyms before their qualifiers.
+  if (startIndex === 0 && row[ROW_LEVEL] === 2) {
+    const heading = normalizeLocatePhrase(row[ROW_ENGLISH]).split(/[(-]|\bsee\b/u, 1)[0];
+    if (heading.split(",").some((alias) => alias.trim() === parts[0])) return 1;
+  }
   return 0;
 }
 
