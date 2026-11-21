@@ -93,16 +93,18 @@ export function findSearchIndices(dataset, query, mode = "auto") {
     if (rowMatches.length) return rowMatches;
   }
 
+  const codeSearch = mode === "code" || (mode === "auto" && looksLikeIcdQuery(queryText));
   const candidates =
-    mode === "code" || (mode === "auto" && looksLikeIcdQuery(queryText))
+    codeSearch
       ? codeCandidateIndices(dataset, queryText)
       : rows.map((_, index) => index);
-  return candidates.filter((index) => rowMatchesSearch(rows[index], queryText, mode));
+  return candidates.filter((index) => rowMatchesSearch(rows[index], queryText, codeSearch ? "code" : mode));
 }
 
 export function rankSearchMatches(dataset, matches, query, mode) {
   const codeSearch = mode === "code" || (mode === "auto" && looksLikeIcdQuery(query));
   const target = codeSearch ? normalizeCode(query) : normalizeLocatePhrase(query);
+  const pathMatch = mode === "auto" && /[,，]/u.test(query) ? locateIndex(dataset, query) : -1;
   const ranked = matches.map((index) => {
     const row = dataset.rows[index];
     const values = codeSearch
@@ -113,7 +115,9 @@ export function rankSearchMatches(dataset, matches, query, mode) {
       : values.some((value) => value.includes(target)) ? 1 : 0;
     return { index, level: row[ROW_LEVEL], score };
   });
-  ranked.sort((a, b) => a.level - b.level || b.score - a.score || a.index - b.index);
+  ranked.sort((a, b) =>
+    Number(b.index === pathMatch) - Number(a.index === pathMatch)
+    || a.level - b.level || b.score - a.score || a.index - b.index);
   return ranked.map(({ index }) => index);
 }
 
